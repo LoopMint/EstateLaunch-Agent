@@ -226,7 +226,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, accent_he
     y = h - hero_h - 34
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
-    c.drawString(margin, y, "Property Highlights")
+    c.drawString(margin, y, "About Property")
     y -= 22
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
@@ -236,7 +236,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, accent_he
     y -= 8
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
     c.setFillColor(colors.HexColor("#17202a"))
-    c.drawString(margin, y, "Why buyers click")
+    c.drawString(margin, y, "Why We Recommend")
     y -= 20
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
@@ -273,7 +273,7 @@ def scrape_templates(query, urls):
     headers = {"User-Agent": "EstateLaunchTemplateResearch/1.0"}
     targets = [u.strip() for u in urls.splitlines() if u.strip()]
     if query.strip():
-        targets.insert(0, "https://duckduckgo.com/html/?q=" + quote_plus(query + " real estate brochure social media template"))
+        targets.insert(0, "https://google.com?q=" + quote_plus(query + " real estate brochure social media template"))
     for url in targets[:5]:
         try:
             html = requests.get(url, headers=headers, timeout=8).text
