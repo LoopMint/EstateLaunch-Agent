@@ -1,7 +1,5 @@
-﻿streamlit
-pandas
-requests
-beautifulsoup4
-Pillow
-reportlab
-streamlit-ckeditor==0.0.4
+streamlit==1.36.0
+pandas==2.2.2
+requests==2.32.3
+beautifulsoup4==4.12.3
+Pillow==10.3.0
