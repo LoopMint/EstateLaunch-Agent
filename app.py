@@ -212,33 +212,33 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, accent_he
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
 
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 23)
+    c.setFont("Helvetica-Bold", edits.get("title_size", 23))
     c.drawString(margin, h - 82, edits["headline"][:58])
-    c.setFont("Helvetica", 12)
+    c.setFont("Helvetica", edits.get("body_size", 12))
     c.drawString(margin, h - 105, listing.get("location", ""))
 
     c.setFillColor(accent_color)
     c.roundRect(w - margin - 150, h - 92, 150, 36, 5, stroke=0, fill=1)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 15)
+    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 3)
     c.drawCentredString(w - margin - 75, h - 78, listing.get("price", ""))
 
     y = h - hero_h - 34
     c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", 16)
+    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
     c.drawString(margin, y, "Property Highlights")
     y -= 22
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
     for line in wrap_pdf(edits["highlights"], 90):
         c.drawString(margin, y, line)
         y -= 14
     y -= 8
-    c.setFont("Helvetica-Bold", 14)
+    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
     c.setFillColor(colors.HexColor("#17202a"))
     c.drawString(margin, y, "Why buyers click")
     y -= 20
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
     for line in wrap_pdf(edits["promo"], 90):
         c.drawString(margin, y, line)
@@ -259,7 +259,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, accent_he
     c.setFillColor(footer_color)
     c.rect(0, 0, w, 54, stroke=0, fill=1)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 11)
+    c.setFont("Helvetica-Bold", edits.get("footer_size", 11))
     c.drawString(margin, 32, edits["footer"][:95])
     c.drawRightString(w - margin, 32, f"Contact by {listing.get('deadline','')}")
     c.showPage()
@@ -325,6 +325,7 @@ with tabs[0]:
             height=120,
         )
         canva_url = st.text_input("Optional Canva artwork link", st.session_state.listing.get("canva_url", ""))
+
         if st.button("Save listing package"):
             save_listing(headline, price, location, deadline, agent, details, canva_url)
             st.success("Listing package saved.")
@@ -344,10 +345,17 @@ with tabs[1]:
     st.subheader("Editable brochure layout")
     c1, c2 = st.columns([.48, .52])
     with c1:
-        edit_headline = st.text_input("Brochure headline", listing.get("headline", ""))
-        edit_promo = st.text_area("Promotional copy", listing.get("promo", ""), height=120)
+        # Link headline & promo directly to listing (single source of truth)
+        edit_headline = listing.get("headline", "")
+        edit_promo = listing.get("promo", "")
+        # Allow highlights/footer to be tweaked if needed
         edit_highlights = st.text_area("Highlights", listing.get("details", ""), height=120)
         edit_footer = st.text_input("Footer/contact line", listing.get("agent", ""))
+
+        st.markdown("### Brochure font sizes (2px steps)")
+        title_size = st.slider("Title font size", 18, 60, 23, step=2)
+        body_size = st.slider("Body font size", 10, 24, 12, step=2)
+        footer_size = st.slider("Footer font size", 10, 20, 11, step=2)
 
         st.markdown("### Brochure style options")
         accent_color = st.color_picker("Accent color (price badge)", "#d94f30")
@@ -368,7 +376,15 @@ with tabs[1]:
         pdf_data = make_brochure_pdf(
             listing,
             images,
-            {"headline": edit_headline, "promo": edit_promo, "highlights": edit_highlights, "footer": edit_footer},
+            {
+                "headline": edit_headline,
+                "promo": edit_promo,
+                "highlights": edit_highlights,
+                "footer": edit_footer,
+                "title_size": title_size,
+                "body_size": body_size,
+                "footer_size": footer_size,
+            },
             hero_choice,
             bottom_choices,
             accent_hex=accent_color,
@@ -401,7 +417,8 @@ with tabs[2]:
     selected = st.multiselect("Social sizes", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
     preview_size = st.selectbox("Preview size", list(SOCIAL_SIZES), index=1)
 
-    social_headline = st.text_input("Social headline", listing.get("headline", "Modern Home Just Listed"))
+    # Social headline always linked to listing headline
+    social_headline = listing.get("headline", "")
     social_font_size = st.slider("Social headline font size", 32, 96, 64)
     social_photo = None
     if images:
