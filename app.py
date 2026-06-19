@@ -349,7 +349,7 @@ with tabs[1]:
         edit_headline = listing.get("headline", "")
         edit_promo = listing.get("promo", "")
         # Allow highlights/footer to be tweaked if needed
-        edit_highlights = st.text_area("Highlights", listing.get("details", ""), height=120)
+        edit_highlights = st.text_area("Highlights", listing.get("promo", ""), height=120)
         edit_footer = st.text_input("Footer/contact line", listing.get("agent", ""))
 
         st.markdown("### Brochure font sizes (2px steps)")
