@@ -27,7 +27,7 @@ st.markdown("""
 .preview{border:1px solid #d7dee7;border-radius:8px;overflow:hidden;background:#fff}
 .hero{min-height:310px;background:#10252b;color:white;display:flex;align-items:flex-end;padding:24px;background-size:cover;background-position:center}
 .hero h2{font-size:2.1rem;margin:0 0 4px}
-.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:4px 6px;font-weight:800}
+.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 8px;font-weight:800}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
 .small{color:#66717e;font-size:.9rem}
 </style>
