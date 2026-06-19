@@ -13,7 +13,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
-from streamlit_quill import st_quill
+from streamlit_ckeditor import st_ckeditor
 
 APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
