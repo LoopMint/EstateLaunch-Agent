@@ -193,14 +193,18 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     mem = io.BytesIO()
     c = canvas.Canvas(mem, pagesize=letter)
     w, h = letter
-    margin = 42
-    hero_h = 270
+
+    # GLOBAL PADDING
+    margin = 50              # increased from 42
+    hero_h = 280             # slightly taller hero
+    col_gap = 28             # more space between columns
+    line_gap = 16            # more readable line spacing
 
     accent_color = colors.HexColor(accent_hex)
     footer_color = colors.HexColor(footer_hex)
 
     # ---------------------------------------------------------
-    # HERO SECTION (matches preview)
+    # HERO SECTION
     # ---------------------------------------------------------
     if images and hero_name:
         hero_img = next((img for name, img in images if name == hero_name), images[0][1])
@@ -211,7 +215,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
         c.drawImage(ImageReader(b), 0, h - hero_h, width=w, height=hero_h,
                     preserveAspectRatio=False, mask="auto")
 
-        # Dark overlay
+        # Overlay
         c.setFillColor(colors.Color(0, 0, 0, alpha=.35))
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
     else:
@@ -219,89 +223,88 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
 
     # ---------------------------------------------------------
-    # HEADLINE + LOCATION (matches preview)
+    # HEADLINE + LOCATION
     # ---------------------------------------------------------
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("title_size", 23))
-    c.drawString(margin, h - 82, edits["headline"][:58])
+    c.setFont("Helvetica-Bold", edits.get("title_size", 26))
+    c.drawString(margin, h - 90, edits["headline"][:58])
 
     c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(margin, h - 105, listing.get("location", ""))
+    c.drawString(margin, h - 115, listing.get("location", ""))
 
     # ---------------------------------------------------------
-    # PRICE BADGE (matches preview)
+    # PRICE BADGE
     # ---------------------------------------------------------
     c.setFillColor(accent_color)
-    c.roundRect(w - margin - 150, h - 92, 150, 36, 5, stroke=0, fill=1)
+    c.roundRect(w - margin - 160, h - 105, 160, 40, 6, stroke=0, fill=1)
 
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 3)
-    c.drawCentredString(w - margin - 75, h - 78, listing.get("price", ""))
+    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
+    c.drawCentredString(w - margin - 80, h - 92, listing.get("price", ""))
 
     # ---------------------------------------------------------
-    # TWO-COLUMN CONTENT (matches preview grid)
+    # TWO COLUMNS (IMPROVED PADDING)
     # ---------------------------------------------------------
-    column_gap = 20
-    column_width = (w - margin*2 - column_gap) / 2
-
+    col_width = (w - margin*2 - col_gap) / 2
     left_x = margin
-    right_x = margin + column_width + column_gap
+    right_x = margin + col_width + col_gap
 
-    # Starting Y for both columns
-    y_left = h - hero_h - 34
-    y_right = h - hero_h - 34
+    # Start lower for better spacing
+    y_left = h - hero_h - 50
+    y_right = h - hero_h - 50
 
     # LEFT COLUMN — Highlights
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
     c.drawString(left_x, y_left, "About This Property")
-    y_left -= 20
+    y_left -= 24
 
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_pdf(edits["highlights"], 55):
+    for line in wrap_pdf(edits["highlights"], 60):
         c.drawString(left_x, y_left, line)
-        y_left -= 14
+        y_left -= line_gap
 
     # RIGHT COLUMN — Promo
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
     c.drawString(right_x, y_right, "Why We Recommend")
-    y_right -= 20
+    y_right -= 24
 
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_pdf(edits["promo"], 55):
+    for line in wrap_pdf(edits["promo"], 60):
         c.drawString(right_x, y_right, line)
-        y_right -= 14
+        y_right -= line_gap
 
     # ---------------------------------------------------------
-    # BOTTOM GALLERY (matches preview)
+    # BOTTOM GALLERY (MORE TOP PADDING)
     # ---------------------------------------------------------
     bottom_imgs = [img for name, img in images if name in bottom_names][:3]
     if bottom_imgs:
         x = margin
-        y_img = 110
+        y_img = 130   # increased from 110 for more breathing room
+
         for img in bottom_imgs:
-            thumb = fit_image(img, (170, 105))
+            thumb = fit_image(img, (180, 115))
             b = io.BytesIO()
             thumb.save(b, format="JPEG", quality=88)
             b.seek(0)
-            c.drawImage(ImageReader(b), x, y_img, width=155, height=95,
+            c.drawImage(ImageReader(b), x, y_img, width=165, height=105,
                         preserveAspectRatio=False, mask="auto")
-            x += 165
+            x += 180
 
     # ---------------------------------------------------------
-    # FOOTER BAR (matches preview)
+    # FOOTER BAR
     # ---------------------------------------------------------
     c.setFillColor(footer_color)
-    c.rect(0, 0, w, 54, stroke=0, fill=1)
+    c.rect(0, 0, w, 60, stroke=0, fill=1)
 
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("footer_size", 11))
-    c.drawString(margin, 32, edits["footer"][:95])
+    c.setFont("Helvetica-Bold", edits.get("footer_size", 12))
+    c.drawString(margin, 35, edits["footer"][:95])
 
-    c.drawRightString(w - margin, 32, f"Contact by {listing.get('deadline','')}")
+    c.drawRightString(w - margin, 35, f"Contact by {listing.get('deadline','')}")
 
     # ---------------------------------------------------------
     # FINALIZE PDF
@@ -310,6 +313,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.save()
     mem.seek(0)
     return mem.getvalue()
+
 
 
 def scrape_templates(query, urls):
