@@ -245,13 +245,13 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     
     usable_width = w - (margin * 2)
     
-    left_col_width = usable_width * 0.30
-    right_col_width = usable_width * 0.30
+    left_col_width = usable_width * 0.40
+    right_col_width = usable_width * 0.40
     
     left_x = margin
     right_x = margin + left_col_width
     
-    inner_pad = 20  # perfect visual padding
+    inner_pad = 50  # perfect visual padding
     
     y_left = h - hero_h - 70
     y_right = h - hero_h - 70
@@ -268,7 +268,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     about_paras = [p.strip() for p in edits["about"].split("\n") if p.strip()][:2]
     
     for para in about_paras:
-        wrapped = wrap_pdf(para, 68)  # tuned for 51% width
+        wrapped = wrap_pdf(para, 38)  # tuned for 51% width
         for line in wrapped:
             c.drawString(left_x + inner_pad, y_left, line)
             y_left -= line_gap
@@ -287,7 +287,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     highlight_lines = [l.strip() for l in edits["highlights"].split("\n") if l.strip()][:5]
     
     for item in highlight_lines:
-        wrapped = wrap_pdf(item, 62)  # tuned for 49% width
+        wrapped = wrap_pdf(item, 32)  # tuned for 49% width
         for i, line in enumerate(wrapped):
             if i == 0:
                 c.drawString(right_x + inner_pad, y_right, "• " + line)
