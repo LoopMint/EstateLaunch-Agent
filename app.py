@@ -18,7 +18,7 @@ APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
 st.markdown("""
 <style>
-.block-container{max-width:1240px;padding-top:5.25rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.block-container{max-width:1240px;padding-top:0rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .title{font-size:2rem;font-weight:800;color:#17202a}
 .sub{color:#5d6673;margin:.2rem 0 1rem}
 .panel{border:1px solid #dfe5ec;border-radius:8px;padding:1rem;background:white;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:.75rem}
