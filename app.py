@@ -631,7 +631,7 @@ with tabs[3]:
                 "date": str(appt_date),
                 "status": status,
                 "price_offer": derived_revenue,
-                "remarks": remarks
+                "remarks": notes
             })
             st.success("Scheduled")
             
