@@ -406,7 +406,7 @@ with tabs[1]:
           </div>
           <div class='grid2'>
             <div><b>About This Property</b><br><span class='small'>{edit_promo}</span></div>
-            <div><b>Why We Recommend</b><br><span class='small'>{edit_highlights}</span></div>
+            <div><b>Why We Recommend</b><br><span class='small'>{edit_headline}</span></div>
           </div>
           <div style='padding:14px 18px;background:#10252b;color:white'>{edit_footer} | Contact by {listing.get('deadline','')}</div>
         </div>
