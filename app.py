@@ -196,7 +196,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     w, h = letter
 
     # Global 5px safe area margin
-    safe = 5
+    safe = 0
     usable_w = w - (safe * 2)
     hero_h = 300
     line_gap = 18
