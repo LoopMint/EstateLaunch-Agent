@@ -240,57 +240,60 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.drawString(margin + 10, h - hero_h + 26, listing.get("price", ""))
 
     # ---------------------------------------------------------
-    # TWO COLUMNS (About left, Highlights right)
-    # ---------------------------------------------------------
-    col_width = (w - margin * 2 - col_gap) / 2
-    left_x = margin
-    right_x = margin + col_width + col_gap
+# TWO COLUMNS — EXACT 50/50 WIDTH
+# ---------------------------------------------------------
 
-    y_left = h - hero_h - 70
-    y_right = h - hero_h - 70
+usable_width = w - (margin * 2)
+col_width = usable_width / 2   # EXACT HALF
 
-    # LEFT COLUMN — About This Property (intro, up to 2 paragraphs)
-    c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(left_x, y_left, "About The Property")
-    y_left -= 26
+left_x = margin
+right_x = margin + col_width
 
-    c.setFont("Helvetica", edits.get("body_size", 12))
-    c.setFillColor(colors.HexColor("#33404d"))
+# Internal padding inside each column
+inner_pad = 10
 
-    about_text = edits.get("about", "")
-    about_paras = [p for p in about_text.split("\n\n") if p.strip()][:2]
-    if not about_paras:
-        about_paras = [about_text]
+y_left = h - hero_h - 70
+y_right = h - hero_h - 70
 
-    for para in about_paras:
-        lines = wrap_pdf(para, 65)
-        for line in lines:
-            c.drawString(left_x, y_left, line)
-            y_left -= line_gap
-        y_left -= line_gap // 2
+# LEFT COLUMN — About This Property
+c.setFillColor(colors.HexColor("#17202a"))
+c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
+c.drawString(left_x + inner_pad, y_left, "About This Property")
+y_left -= 26
 
-    # RIGHT COLUMN — Why We Recommend (up to 5 bullet points)
-    c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(right_x, y_right, "Why We Recommend")
-    y_right -= 50
+c.setFont("Helvetica", edits.get("body_size", 12))
+c.setFillColor(colors.HexColor("#33404d"))
 
-    c.setFont("Helvetica", edits.get("body_size", 12))
-    c.setFillColor(colors.HexColor("#33404d"))
+about_paras = [p for p in edits["about"].split("\n") if p.strip()][:2]
 
-    highlights_raw = edits.get("highlights", "")
-    highlight_lines = [l.strip() for l in highlights_raw.split("\n") if l.strip()][:5]
+for para in about_paras:
+    wrapped = wrap_pdf(para, 60)  # 60 chars fits half-page width
+    for line in wrapped:
+        c.drawString(left_x + inner_pad, y_left, line)
+        y_left -= line_gap
+    y_left -= line_gap // 2
 
-    for item in highlight_lines:
-        wrapped = wrap_pdf(item, 60)
-        for i, line in enumerate(wrapped):
-            if i == 0:
-                c.drawString(right_x, y_right, "• " + line)
-            else:
-                c.drawString(right_x + 14, y_right, line)
-            y_right -= line_gap
-        y_right -= line_gap // 2
+
+# RIGHT COLUMN — Why We Recommend (bullets)
+c.setFillColor(colors.HexColor("#17202a"))
+c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
+c.drawString(right_x + inner_pad, y_right, "Why We Recommend")
+y_right -= 26
+
+c.setFont("Helvetica", edits.get("body_size", 12))
+c.setFillColor(colors.HexColor("#33404d"))
+
+highlight_lines = [l.strip() for l in edits["highlights"].split("\n") if l.strip()][:5]
+
+for item in highlight_lines:
+    wrapped = wrap_pdf(item, 55)
+    for i, line in enumerate(wrapped):
+        if i == 0:
+            c.drawString(right_x + inner_pad, y_right, "• " + line)
+        else:
+            c.drawString(right_x + inner_pad + 14, y_right, line)
+        y_right -= line_gap
+    y_right -= line_gap // 2
 
     # ---------------------------------------------------------
     # BOTTOM GALLERY
