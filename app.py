@@ -379,11 +379,11 @@ def calculate_singapore_absd(property_value, profile, property_count):
     return property_value * rate, rate
 
 # --- Tab Layout Grid System ---
-tabs = st.tabs(["Property Track Ledger", "Listing Entry", "Brochure PDF", "Social Media", "Appointment", "ABSD & Revenue Reporting"])
+tabs = st.tabs(["Property Listing", "Listing Entry", "Brochure PDF", "Social Media", "Appointment", "ABSD & Revenue Reporting"])
 
 # --- TAB 0: PROPERTY TRACK LEDGER ---
 with tabs[0]:
-    st.subheader("Active Property Track Portfolio")
+    st.subheader("Active Listing")
     st.markdown("Select an active property row from your registry below to deploy across the design, appointment, and structural reporting modules.")
     
     if st.session_state.properties:
@@ -405,7 +405,7 @@ with tabs[0]:
             st.success(f"Purged '{delete_target}' successfully from session matrix database.")
             st.rerun()
     else:
-        st.warning("No tracked property profiles found in the registry. Head to 'Listing Entry' to seed the data engine.")
+        st.warning("No tracked property found in the registry. Head to 'Listing Entry' to seed the data engine.")
 
 # Find active record payload context matching tracking focus selection
 active_id = st.session_state.selected_property_id
@@ -424,22 +424,22 @@ footer_color = "#10252b"
 with tabs[1]:
     col1, col2 = st.columns([.45, .55])
     with col1:
-        uploads = st.file_uploader("Upload property staging imagery files", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+        uploads = st.file_uploader("Upload images", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
         new_images = load_images(uploads)
         if new_images:
             st.session_state.images = [(name, img.copy()) for name, img in new_images]
             st.image([img for _, img in st.session_state.images[:4]], caption=[name for name, _ in st.session_state.images[:4]], width=180)
     with col2:
-        in_headline = st.text_input("Property Headline Descriptor", listing.get("headline", ""))
-        in_price = st.text_input("Guide Price Target (SGD / USD)", listing.get("price", ""))
-        in_location = st.text_input("Geographic District Location / Sector", listing.get("location", ""))
-        in_deadline = st.date_input("Offer Closing Cutoff Date", date.today() + timedelta(days=21))
-        in_agent = st.text_input("Primary Lead Agent Handle", listing.get("agent", ""))
-        in_details = st.text_area("Narrative Specifications", listing.get("details", ""), height=120)
-        in_comm = st.slider("Agreed Agent Fee Share Commission %", 0.0, 10.0, float(listing.get("commission_rate", 2.5)), step=0.1)
-        in_status = st.selectbox("Current Tracking Inventory Status", ["Available", "Offer Received", "Sold", "Archived"], index=["Available", "Offer Received", "Sold", "Archived"].index(listing.get("status", "Available")))
+        in_headline = st.text_input("Property Name", listing.get("headline", ""))
+        in_price = st.text_input("Price Target (SGD / USD)", listing.get("price", ""))
+        in_location = st.text_input("Location / Sector", listing.get("location", ""))
+        in_deadline = st.date_input("Offer Closing Date", date.today() + timedelta(days=21))
+        in_agent = st.text_input("Primary Agent", listing.get("agent", ""))
+        in_details = st.text_area("Description", listing.get("details", ""), height=120)
+        in_comm = st.slider("Agent Fee Share Commission %", 0.0, 10.0, float(listing.get("commission_rate", 2.5)), step=0.1)
+        in_status = st.selectbox("Status", ["Available", "Offer Received", "Sold", "Archived"], index=["Available", "Offer Received", "Sold", "Archived"].index(listing.get("status", "Available")))
         
-        if st.button("Commit & Append to Master Registry Ledger"):
+        if st.button("Submit"):
             if listing['id'] != 0:
                 # Update existing inline profile track
                 for idx, p in enumerate(st.session_state.properties):
@@ -464,7 +464,7 @@ with tabs[1]:
 
 # --- TAB 2: BROCHURE PDF ---
 with tabs[2]:
-    st.subheader(f"Collateral Engine Workspace: {listing.get('headline','')}")
+    st.subheader(f"Design: {listing.get('headline','')}")
     c1, c2 = st.columns([.48, .52])
     with c1:
         edit_headline = listing.get("headline", "")
@@ -487,7 +487,7 @@ with tabs[2]:
         pdf_data = make_brochure_pdf(listing, images, {"headline": edit_headline, "about": about_text, "highlights": highlights_text, "footer": edit_footer, "title_size": title_size, "body_size": body_size}, hero_choice, bottom_choices, accent_hex=accent_color, footer_hex=footer_color)
         
         st.markdown("### Collateral Package Generation Track")
-        st.download_button("Download Print Brochure Sheet (PDF)", pdf_data, file_name="estate_brochure.pdf", mime="application/pdf", use_container_width=True)
+        st.download_button("Download Print (PDF)", pdf_data, file_name="estate_brochure.pdf", mime="application/pdf", use_container_width=True)
         
         # Social Media Compilation JPEGs Extraction Pipeline Node Placement
         social_zip_data = make_social_jpeg_zip(listing, images, hero_choice, accent_color, footer_color)
@@ -515,14 +515,14 @@ with tabs[2]:
 
 # --- TAB 3: SOCIAL MEDIA ---
 with tabs[3]:
-    st.subheader("Social Copywriting Desk & Virality Strategy Planner")
-    st.markdown("### Active Platform Layout Copy Registry")
+    st.subheader("Social Media Plan")
+    st.markdown("### Proposed Captions")
     rows = [{"platform_size": label, "caption": caption_for(label, listing), "hook_type": "Curiosity Capture Framework", "cta": "Schedule private showing profile"} for label in SOCIAL_SIZES]
     df = pd.DataFrame(rows)
     edited_df = st.data_editor(df, use_container_width=True, hide_index=True)
     
     st.markdown("---")
-    st.markdown("### AI Organic Engagement & Virality Playbook")
+    st.markdown("### Schedule")
     calendar_plan = [
         {"Day": "Day 1", "Platform": "TikTok / Vertical Shorts Reel", "Organic Strategy Scheme": "POV Financial Discovery Hook", "Algorithmic Virality Engine Instruction Rules": "Anchor on immediate price comparison text anchors. Target local pricing sentiment indices to generate immediate community comment engagement loops."},
         {"Day": "Day 3", "Platform": "Instagram Multi-Image Slide", "Organic Strategy Scheme": "Architectural Asset Breakdown Gallery", "Algorithmic Virality Engine Instruction Rules": "Isolate high-impact highlight bullets. Force carousel retention tracking metrics by framing secondary images as hidden layout advantages."},
@@ -532,20 +532,20 @@ with tabs[3]:
 
 # --- TAB 4: APPOINTMENT ---
 with tabs[4]:
-    st.subheader(f"Lead Pipeline & Conversion Track: {listing.get('headline','')}")
+    st.subheader(f"Leads CRM: {listing.get('headline','')}")
     with st.form("appointment_form"):
-        client = st.text_input("Prospect / Client Identity Name", "Michael Tan")
-        appt_date = st.date_input("Scheduled Showing Event Date", date.today() + timedelta(days=2))
-        status = st.selectbox("Deal Status Position Track", ["Scheduled", "Shown", "Offer Table", "Under Contract", "Closed / Settled", "Lost / Cancelled"])
-        notes = st.text_area("Consultation Context Logs", "Reviewing ABSD liability brackets for multiple properties.")
+        client = st.text_input("Prospect Name", "Michael Tan")
+        appt_date = st.date_input("Scheduled Showing Date", date.today() + timedelta(days=2))
+        status = st.selectbox("Deal Status", ["Scheduled", "Shown", "Offer Table", "Under Contract", "Closed / Settled", "Lost / Cancelled"])
+        notes = st.text_area("Remarks", "Reviewing ABSD liability brackets for multiple properties.")
         
-        if st.form_submit_button("Log Client Interaction Entry"):
+        if st.form_submit_button("Submit"):
             derived_revenue = parse_price_to_float(listing.get("price", "0"))
             st.session_state.appointments.append({
                 "property_id": listing['id'], "property_name": listing['headline'], "client": client, 
                 "date": str(appt_date), "status": status, "revenue_basis": derived_revenue, "notes": notes
             })
-            st.success(f"Appointment committed. Financial transaction base locked to tracking value: ${derived_revenue:,.2f}")
+            st.success(f"Scheduled")
             
     appts = pd.DataFrame(st.session_state.appointments)
     if not appts.empty:
