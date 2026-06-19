@@ -245,13 +245,13 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     
     usable_width = w - (margin * 2)
     
-    left_col_width = usable_width * 0.51
-    right_col_width = usable_width * 0.49
+    left_col_width = usable_width * 0.30
+    right_col_width = usable_width * 0.30
     
     left_x = margin
     right_x = margin + left_col_width
     
-    inner_pad = 12  # perfect visual padding
+    inner_pad = 20  # perfect visual padding
     
     y_left = h - hero_h - 70
     y_right = h - hero_h - 70
