@@ -35,7 +35,6 @@ st.markdown("""
 .price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
 .small{color:#66717e;font-size:.9rem}
-.toolbar button{margin-right:6px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer}
 </style>
 """, unsafe_allow_html=True)
 
@@ -74,26 +73,6 @@ SOCIAL_SIZES = {
 }
 
 # ---------------------------------------------------------
-# BASIC HTML TOOLBAR (CLOUD SAFE)
-# ---------------------------------------------------------
-
-def basic_toolbar(label, key):
-    st.markdown(f"### {label}")
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Bold", key=f"bold_{key}"):
-            st.session_state[key] = st.session_state.get(key, "") + "<b></b>"
-    with col2:
-        if st.button("Italic", key=f"italic_{key}"):
-            st.session_state[key] = st.session_state.get(key, "") + "<i></i>"
-    with col3:
-        if st.button("Underline", key=f"underline_{key}"):
-            st.session_state[key] = st.session_state.get(key, "") + "<u></u>"
-
-    return st.text_area("", value=st.session_state.get(key, ""), key=key, height=150)
-
-# ---------------------------------------------------------
 # HELPERS
 # ---------------------------------------------------------
 
@@ -110,15 +89,8 @@ def load_images(uploaded):
 def fit_image(img, size):
     return ImageOps.fit(img, size, method=Image.LANCZOS, centering=(0.5, 0.5))
 
-def font(size, bold=False):
-    try:
-        name = "arialbd.ttf" if bold else "arial.ttf"
-        return ImageFont.truetype(name, size)
-    except Exception:
-        return ImageFont.load_default()
-
-def html_to_plain(html):
-    soup = BeautifulSoup(html, "html.parser")
+def html_to_plain(text):
+    soup = BeautifulSoup(text, "html.parser")
     return " ".join(soup.get_text(" ").split())
 
 def wrap_text(draw, text, fnt, max_width):
@@ -150,8 +122,8 @@ def circular_image(img, diameter):
 # SOCIAL IMAGE GENERATOR
 # ---------------------------------------------------------
 
-def social_image(size, listing, images, platform, headline_html, font_size, selected_photo):
-    headline = html_to_plain(headline_html)
+def social_image(size, listing, images, platform, headline, font_size, selected_photo):
+    headline = html_to_plain(headline)
     w, h = size
     base = Image.new("RGB", size, "#10252b")
 
@@ -174,10 +146,10 @@ def social_image(size, listing, images, platform, headline_html, font_size, sele
     draw.rounded_rectangle((margin, margin, margin + int(w * 0.34), margin + badge_h),
                            radius=10, fill="#d94f30")
     draw.text((margin + 22, margin + 14), price, fill="white",
-              font=font(max(26, int(w * 0.034)), True))
+              font=ImageFont.truetype("arialbd.ttf", max(26, int(w * 0.034))))
 
     # Headline
-    headline_font = font(font_size, True)
+    headline_font = ImageFont.truetype("arialbd.ttf", font_size)
     y = int(h * 0.55) if h > w else int(h * 0.34)
 
     for line in wrap_text(draw, headline, headline_font, w - margin * 2)[:3]:
@@ -187,13 +159,13 @@ def social_image(size, listing, images, platform, headline_html, font_size, sele
     # Subline
     sub = f"{location} | Contact by {deadline}"
     draw.text((margin, y + 12), sub, fill="#f3f7f8",
-              font=font(max(24, int(w * 0.028)), False))
+              font=ImageFont.truetype("arial.ttf", max(24, int(w * 0.028))))
 
     # Footer bar
     draw.rectangle((0, h - int(h * .12), w, h), fill="#10252b")
     draw.text((margin, h - int(h * .08)),
               f"{agent}  |  Schedule a showing",
-              fill="white", font=font(max(24, int(w * 0.027)), True))
+              fill="white", font=ImageFont.truetype("arialbd.ttf", max(24, int(w * 0.027))))
 
     return base
 
@@ -201,15 +173,9 @@ def social_image(size, listing, images, platform, headline_html, font_size, sele
 # BROCHURE PDF GENERATOR
 # ---------------------------------------------------------
 
-def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agent_photo_name,
+def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, agent_photo_name,
+                      title_size, body_size, footer_size,
                       accent_hex="#d94f30", footer_hex="#10252b"):
-
-    edits = {
-        "headline": html_to_plain(edits_html["headline"]),
-        "promo": html_to_plain(edits_html["promo"]),
-        "highlights": html_to_plain(edits_html["highlights"]),
-        "footer": html_to_plain(edits_html["footer"]),
-    }
 
     mem = io.BytesIO()
     c = canvas.Canvas(mem, pagesize=letter)
@@ -232,44 +198,45 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
         c.setFillColor(colors.Color(0, 0, 0, alpha=.35))
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
 
-    # Headline
+    # Headline (Helvetica)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 23)
+    c.setFont("Helvetica-Bold", title_size)
     c.drawString(margin, h - 82, edits["headline"][:58])
 
-    c.setFont("Helvetica", 12)
+    # Location
+    c.setFont("Helvetica", body_size)
     c.drawString(margin, h - 105, listing.get("location", ""))
 
     # Price badge
     c.setFillColor(accent_color)
     c.roundRect(w - margin - 150, h - 92, 150, 36, 5, stroke=0, fill=1)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 15)
+    c.setFont("Helvetica-Bold", body_size)
     c.drawCentredString(w - margin - 75, h - 78, listing.get("price", ""))
 
     # Highlights
     y = h - hero_h - 34
     c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", 16)
+    c.setFont("Helvetica-Bold", body_size + 2)
     c.drawString(margin, y, "Property Highlights")
     y -= 22
 
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", body_size)
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_text(c, edits["highlights"], font(10), 90):
+    for line in wrap_text(c, edits["highlights"], ImageFont.load_default(), 90):
         c.drawString(margin, y, line)
         y -= 14
 
     # Promo
     y -= 8
-    c.setFont("Helvetica-Bold", 14)
+    c.setFont("Helvetica-Bold", body_size + 2)
     c.setFillColor(colors.HexColor("#17202a"))
     c.drawString(margin, y, "Why buyers click")
     y -= 20
 
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", body_size)
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_text(c, edits["promo"], font(10), 90):
+    for line in wrap_text(c, edits["promo"], ImageFont.load_default(), 90):
         c.drawString(margin, y, line)
         y -= 14
 
@@ -310,12 +277,12 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
     else:
         text_x = margin
 
-    # Footer text
+    # Footer text (Arial)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 12)
+    c.setFont("Helvetica-Bold", footer_size)
     c.drawString(text_x, 40, edits["footer"][:95])
 
-    c.setFont("Helvetica", 10)
+    c.setFont("Helvetica", footer_size - 2)
     c.drawString(text_x, 22, f"Contact by {listing.get('deadline','')}")
 
     c.showPage()
@@ -413,4 +380,30 @@ listing = st.session_state.listing or {
     "price": "$749,000",
     "location": "Austin, TX",
     "deadline": str(date.today() + timedelta(days=21)),
-    "agent": "Angela Lee
+    "agent": "Angela Lee | 555-0100",
+    "details": "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard.",
+    "canva_url": "",
+}
+images = st.session_state.get("images", [])
+
+if st.session_state.section == "Listing":
+    col1, col2 = st.columns([.45, .55])
+    with col1:
+        uploads = st.file_uploader("Upload multiple property photos", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+        new_images = load_images(uploads)
+        if new_images:
+            st.session_state.images = [(name, img.copy()) for name, img in new_images]
+            st.image([img for _, img in new_images[:4]], caption=[name for name, _ in new_images[:4]], width=180)
+
+    with col2:
+        headline = st.text_input("Listing headline", listing.get("headline", ""))
+        price = st.text_input("Price", listing.get("price", ""))
+        location = st.text_input("Location", listing.get("location", ""))
+        deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
+        agent = st.text_input("Agent contact", listing.get("agent", ""))
+
+        details_html = st.text_area("Property details", listing.get("details", ""), height=150)
+        canva_url = st.text_input("Optional Canva artwork link", listing.get("canva_url", ""))
+
+        if st.button("Save listing package"):
+            save_listing(headline,
