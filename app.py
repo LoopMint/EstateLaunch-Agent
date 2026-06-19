@@ -378,8 +378,8 @@ with tabs[1]:
             images,
             {
                 "headline": edit_headline,
-                "promo": edit_promo,
-                "highlights": edit_highlights,
+                "promo": edit_highlights,
+                "highlights": edit_promo,
                 "footer": edit_footer,
                 "title_size": title_size,
                 "body_size": body_size,
