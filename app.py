@@ -73,7 +73,6 @@ def fit_image(img, size):
 
 
 def font(size, bold=False):
-    # Expanded fallback array to support dynamic sizing on Linux/Streamlit environment
     font_names = [
         "arialbd.ttf" if bold else "arial.ttf",
         "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
@@ -105,7 +104,7 @@ def wrap_text(draw, text, fnt, max_width):
     return lines
 
 
-def social_image(size, listing, images, platform, headline, font_size, selected_photo, accent_hex="#d94f30", footer_hex="#10252b"):
+def social_image(size, listing, images, platform, headline, base_font_size, selected_photo, accent_hex="#d94f30", footer_hex="#10252b"):
     w, h = size
     base = Image.new("RGB", size, footer_hex)
     
@@ -121,26 +120,26 @@ def social_image(size, listing, images, platform, headline, font_size, selected_
     draw = ImageDraw.Draw(base)
     margin = max(42, int(w * 0.06))
     
-    price = listing.get("price", "$1,749,000")
-    location = listing.get("location", "Singapore")
-    agent = listing.get("agent", "Angela Tan | 9555-0100")
+    price = listing.get("price", "$749,000")
+    location = listing.get("location", "Austin, TX")
+    agent = listing.get("agent", "Angela Lee | 555-0100")
     deadline = listing.get("deadline", str(date.today() + timedelta(days=21)))
     
-    # Text Layout Sizing Hierarchy
-    headline_font = font(font_size, True)
-    loc_font = font(max(18, int(font_size * 0.45)), False)
-    price_font = font(max(20, int(font_size * 0.50)), True)
+    # Context-aware font adjustment based on aspect ratio rules
+    is_landscape = w > h
+    optimized_font_size = int(base_font_size * 0.75) if is_landscape else base_font_size
     
-    # Calculate bottom stack bounds
+    headline_font = font(optimized_font_size, True)
+    loc_font = font(max(18, int(optimized_font_size * 0.45)), False)
+    price_font = font(max(20, int(optimized_font_size * 0.50)), True)
+    
     footer_height = int(h * 0.12) if h > w else int(h * 0.15)
     content_y_max = h - footer_height - margin
     
-    # Process text wrap limits
     wrapped_lines = wrap_text(draw, headline, headline_font, w - margin * 2)[:3]
     line_height = draw.textbbox((0, 0), "A", font=headline_font)[3] * 1.2
     total_text_h = len(wrapped_lines) * line_height
     
-    # Draw dynamically stacked text elements (Bottom-Up adaptation strategy)
     current_y = content_y_max - total_text_h - 110
     if current_y < margin:
         current_y = margin
@@ -152,7 +151,7 @@ def social_image(size, listing, images, platform, headline, font_size, selected_
     current_y += 10
     draw.text((margin, current_y), f"{location}  |  Contact by {deadline}", fill="#e2e8f0", font=loc_font)
     
-    # Render Dynamic Price Box Badge matching exact string box limits
+    # 2px Padding Box Badge Structure
     current_y += 24
     p_box = draw.textbbox((0, 0), price, font=price_font)
     p_w = p_box[2] - p_box[0]
@@ -161,12 +160,12 @@ def social_image(size, listing, images, platform, headline, font_size, selected_
     pad = 6
     draw.rounded_rectangle(
         (margin, current_y, margin + p_w + (pad * 2), current_y + p_h + (pad * 2) + 4), 
-        radius=6, 
+        radius=4, 
         fill=accent_hex
     )
     draw.text((margin + pad, current_y + pad), price, fill="white", font=price_font)
     
-    # Footer Bar Base background
+    # Render Footer Track
     draw.rectangle((0, h - footer_height, w, h), fill=footer_hex)
     footer_text_font = font(max(18, int(w * 0.026)), True)
     footer_y = h - int(footer_height / 2) - 10
@@ -246,7 +245,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c = canvas.Canvas(mem, pagesize=letter)
     w, h = letter
 
-    # Global 5px safe area margin across edges
     safe = 0
     usable_w = w - (safe * 2)
     hero_h = 300
@@ -255,9 +253,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     accent_color = colors.HexColor(accent_hex)
     footer_color = colors.HexColor(footer_hex)
 
-    # ---------------------------------------------------------
-    # HERO SECTION
-    # ---------------------------------------------------------
     hero_y = h - safe - hero_h
     if images and hero_name:
         hero_img = next((img for name, img in images if name == hero_name), images[0][1])
@@ -273,9 +268,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
         c.setFillColor(footer_color)
         c.rect(safe, hero_y, usable_w, hero_h, stroke=0, fill=1)
 
-    # ---------------------------------------------------------
-    # HEADLINE, LOCATION, PRICE (Dynamic Bottom-Up spacing)
-    # ---------------------------------------------------------
     col_pad = 40
     title_size = edits.get("title_size", 26)
     body_size = edits.get("body_size", 12)
@@ -307,9 +299,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.setFont("Helvetica-Bold", price_font_size)
     c.drawString(safe + col_pad + pad, price_box_y + pad + 1, price_text)
 
-    # ---------------------------------------------------------
-    # TWO COLUMNS — Hanging Indent Bullets
-    # ---------------------------------------------------------
     col_w = (usable_w / 2) - col_pad - 10
     left_x = safe + col_pad
     right_x = safe + (usable_w / 2) + 10
@@ -319,7 +308,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
 
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", body_size + 5)
-    c.drawString(left_x, y_left, "About The Property")
+    c.drawString(left_x, y_left, "About This Property")
     y_left -= 28
 
     c.setFont("Helvetica", body_size)
@@ -356,9 +345,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
             y_right -= line_gap
         y_right -= line_gap // 2
 
-    # ---------------------------------------------------------
-    # BOTTOM GALLERY
-    # ---------------------------------------------------------
     bottom_imgs = [img for name, img in images if name in bottom_names][:3]
     if bottom_imgs:
         img_w = (usable_w - (col_pad * 2) - 20) / 3
@@ -374,9 +360,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
                         preserveAspectRatio=False, mask="auto")
             x += img_w + 10
 
-    # ---------------------------------------------------------
-    # FOOTER BAR (Edge to Edge)
-    # ---------------------------------------------------------
     footer_h = 70
     c.setFillColor(footer_color)
     c.rect(safe, safe, usable_w, footer_h, stroke=0, fill=1)
@@ -392,6 +375,16 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     return mem.getvalue()
 
 
+def scrape_templates(query, urls):
+    results = []
+    # Basic structural mock fallback for pipeline preservation 
+    for url in [u.strip() for u in urls.split("\n") if u.strip()][:3]:
+        results.append({"source": url, "style_cues": "Clean margins, white backgrounds, heavy font weights for key metrics"})
+    if not results and query:
+        results.append({"source": f"Search: {query}", "style_cues": "Asymmetrical photo blocks, distinct callouts, dark footers"})
+    return results
+
+
 def save_listing(headline, price, location, deadline, agent, details, canva_url):
     st.session_state.listing = {
         "headline": headline,
@@ -404,7 +397,8 @@ def save_listing(headline, price, location, deadline, agent, details, canva_url)
     }
 
 
-tabs = st.tabs(["Listing", "Brochure PDF", "Social Media Assets", "Captions", "Template Research", "Appointments & Revenue"])
+# Unified Layout Tab Management
+tabs = st.tabs(["Listing", "Brochure PDF", "Social Media", "Template Research", "Appointments & Revenue"])
 
 with tabs[0]:
     col1, col2 = st.columns([.45, .55])
@@ -436,11 +430,15 @@ listing = st.session_state.listing or {
     "price": "$1,750,000",
     "location": "Austin, TX",
     "deadline": str(date.today() + timedelta(days=21)),
-    "agent": "Angela Lee | 555-0100",
+    "agent": "Angela Tan | 9555 0100",
     "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with easy access to parks and amenities.",
     "canva_url": "",
 }
 images = st.session_state.get("images", [])
+
+# Shared design variables
+accent_color = "#d94f30"
+footer_color = "#10252b"
 
 with tabs[1]:
     st.subheader("Editable brochure layout")
@@ -516,49 +514,53 @@ with tabs[1]:
         """, unsafe_allow_html=True)
 
 with tabs[2]:
-    st.subheader("Generate platform-ready social images")
+    st.subheader("Unified Social Media Campaign Studio")
     
-    sc1, sc2 = st.columns([0.48, 0.52])
+    sc1, sc2 = st.columns([0.45, 0.55])
     with sc1:
-        selected = st.multiselect("Select Target Social Media Platforms", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
-        preview_size = st.selectbox("Display Preview Dimensions", list(SOCIAL_SIZES), index=1)
+        st.markdown("### 1. Amend Content Rules")
+        social_headline_input = st.text_input("Social Headline Overwrite", listing.get("headline", ""))
+        social_price_input = st.text_input("Social Price Overwrite", listing.get("price", ""))
+        social_location_input = st.text_input("Social Location Overwrite", listing.get("location", ""))
         
-        st.markdown("### Manual Layout Changes & Adjustments")
-        social_headline_input = st.text_input("Custom Social Headline (Overrides Default)", listing.get("headline", ""))
-        social_price_input = st.text_input("Custom Social Price Display", listing.get("price", ""))
-        social_location_input = st.text_input("Custom Social Location Display", listing.get("location", ""))
-        
-        social_font_size = st.slider("Responsive Font Scaling Size", 24, 110, 56)
+        st.markdown("### 2. Layout Fine-Tuning")
+        social_font_size = st.slider("Base Canvas Font Size", 24, 110, 56)
         
         social_photo = None
         if images:
-            social_photo = st.selectbox("Select Display Photo Asset", [name for name, _ in images], index=0)
+            social_photo = st.selectbox("Social Image Focus Asset", [name for name, _ in images], index=0)
             
         custom_social_listing = {
             "headline": social_headline_input,
             "price": social_price_input,
             "location": social_location_input,
             "agent": listing.get("agent", ""),
-            "deadline": listing.get("deadline", "")
+            "deadline": listing.get("deadline", ""),
+            "details": listing.get("details", "")
         }
 
-        # Safe multi-platform processing link activation wrapper 
-        if selected:
+        st.markdown("### 3. Package Export Distribution")
+        selected_platforms = st.multiselect("Select Assets to Package", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
+        
+        if selected_platforms:
             zip_data = make_social_zip(
-                custom_social_listing, images, selected, social_headline_input, 
+                custom_social_listing, images, selected_platforms, social_headline_input, 
                 social_font_size, social_photo, accent_color, footer_color
             )
             st.download_button(
-                "Download Zipped Social Package",
+                "Download Unified Social Campaign (.ZIP)",
                 zip_data,
-                file_name="estate_social_media_assets.zip",
+                file_name="estate_social_campaign.zip",
                 mime="application/zip",
                 use_container_width=True
             )
         else:
-            st.info("Select at least one social size criteria platform item to enable down-link compression.")
+            st.info("Check-mark at least one distribution target platform option above.")
 
     with sc2:
+        st.markdown("### 4. Interactive Cross-Platform Previews")
+        preview_size = st.selectbox("Toggle Aspect Ratio Adaptation View", list(SOCIAL_SIZES), index=1)
+        
         preview = social_image(
             SOCIAL_SIZES[preview_size],
             custom_social_listing,
@@ -570,16 +572,21 @@ with tabs[2]:
             accent_hex=accent_color,
             footer_hex=footer_color
         )
-        st.image(preview, caption=f"Live Layout Asset Preview ({preview_size})", use_container_width=True)
+        st.image(preview, caption=f"Dynamic Adaptation Render Framework ({preview_size})", use_container_width=True)
+        
+        # Display platform-specific interactive caption block
+        st.markdown("#### Generated Platform Caption Track")
+        current_caption = caption_for(preview_size, custom_social_listing)
+        st.text_area("Live Clipboard-Ready Caption", current_caption, height=90, key="live_caption_box")
 
-with tabs[3]:
-    st.subheader("Click-focused social captions")
-    rows = [{"platform_size": label, "caption": caption_for(label, listing), "hook_type": "curiosity + deadline", "cta": "Book a private showing"} for label in SOCIAL_SIZES]
+    # Lower Full Campaign Copy Grid Segment
+    st.markdown("---")
+    st.markdown("### Master Copy & Asset Summary Registry")
+    rows = [{"platform_size": label, "caption": caption_for(label, custom_social_listing), "hook_type": "curiosity + deadline", "cta": "Book a private showing"} for label in SOCIAL_SIZES]
     df = pd.DataFrame(rows)
     st.data_editor(df, use_container_width=True, hide_index=True)
-    st.download_button("Download caption bank CSV", df.to_csv(index=False), file_name="estate_caption_bank.csv")
 
-with tabs[4]:
+with tabs[3]:
     st.subheader("Scrape and adapt template inspiration")
     query = st.text_input("Search query", "luxury real estate brochure template Instagram property listing")
     urls = st.text_area("Or paste template/sample URLs, one per line", "")
@@ -592,7 +599,7 @@ with tabs[4]:
         adapted = canva_prompt(listing) + " Adapt visual style cues from research: " + cues
         st.text_area("Adapted AI/Canva design prompt", adapted, height=150)
 
-with tabs[5]:
+with tabs[4]:
     with st.form("appointment"):
         client = st.text_input("Buyer / client", "Jordan Smith")
         appt_date = st.date_input("Appointment date", date.today() + timedelta(days=2))
