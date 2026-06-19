@@ -187,6 +187,7 @@ def wrap_pdf(text, width):
         lines.append(line)
     return lines
 
+
 def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
                       accent_hex="#d94f30", footer_hex="#10252b"):
 
@@ -223,39 +224,32 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
 
     # ---------------------------------------------------------
-    # HEADLINE + LOCATION
+    # HEADLINE, LOCATION, PRICE (title → location → price)
     # ---------------------------------------------------------
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", edits.get("title_size", 26))
-    c.drawString(margin, h - hero_h + 45, edits["headline"][:58])
+    c.drawString(margin, h - hero_h + 60, edits["headline"][:70])
 
     c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(margin, h - hero_h + 20, listing.get("location", ""))
+    c.drawString(margin, h - hero_h + 38, listing.get("location", ""))
 
-    # ---------------------------------------------------------
-    # PRICE BADGE
-    # ---------------------------------------------------------
     c.setFillColor(accent_color)
-    c.roundRect(w - margin - 160, h - hero_h + 30, 160, 40, 6, stroke=0, fill=1)
-
+    c.roundRect(margin, h - hero_h + 16, 170, 32, 6, stroke=0, fill=1)
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 4)
-    c.drawCentredString(w - margin - 80, h - hero_h + 45, listing.get("price", ""))
+    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 2)
+    c.drawString(margin + 10, h - hero_h + 26, listing.get("price", ""))
 
     # ---------------------------------------------------------
-    # TWO COLUMNS (MATCH PREVIEW ORDER)
+    # TWO COLUMNS (About left, Highlights right)
     # ---------------------------------------------------------
-    col_width = (w - margin*2 - col_gap) / 2
+    col_width = (w - margin * 2 - col_gap) / 2
     left_x = margin
     right_x = margin + col_width + col_gap
 
-    # Start lower for spacing
     y_left = h - hero_h - 70
     y_right = h - hero_h - 70
 
-    # ---------------------------------------------------------
-    # LEFT COLUMN — About This Property
-    # ---------------------------------------------------------
+    # LEFT COLUMN — About This Property (intro, up to 2 paragraphs)
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
     c.drawString(left_x, y_left, "About This Property")
@@ -264,19 +258,19 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
 
-    # Respect user line breaks
-    about_lines = edits["highlights"].split("\n")
-    for para in about_lines:
-        if para.strip() == "":
-            y_left -= line_gap
-            continue
-        for line in wrap_pdf(para, 65):
+    about_text = edits.get("about", "")
+    about_paras = [p for p in about_text.split("\n\n") if p.strip()][:2]
+    if not about_paras:
+        about_paras = [about_text]
+
+    for para in about_paras:
+        lines = wrap_pdf(para, 65)
+        for line in lines:
             c.drawString(left_x, y_left, line)
             y_left -= line_gap
+        y_left -= line_gap // 2
 
-    # ---------------------------------------------------------
-    # RIGHT COLUMN — Why We Recommend (BULLETS)
-    # ---------------------------------------------------------
+    # RIGHT COLUMN — Why We Recommend (up to 5 bullet points)
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
     c.drawString(right_x, y_right, "Why We Recommend")
@@ -285,22 +279,18 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
 
-    recommend_lines = edits["promo"].split("\n")
-    for para in recommend_lines:
-        if para.strip() == "":
-            y_right -= line_gap
-            continue
+    highlights_raw = edits.get("highlights", "")
+    highlight_lines = [l.strip() for l in highlights_raw.split("\n") if l.strip()][:5]
 
-        # Bullet point
-        bullet = "• "
-        wrapped = wrap_pdf(para, 60)
-
+    for item in highlight_lines:
+        wrapped = wrap_pdf(item, 60)
         for i, line in enumerate(wrapped):
             if i == 0:
-                c.drawString(right_x, y_right, bullet + line)
+                c.drawString(right_x, y_right, "• " + line)
             else:
                 c.drawString(right_x + 14, y_right, line)
             y_right -= line_gap
+        y_right -= line_gap // 2
 
     # ---------------------------------------------------------
     # BOTTOM GALLERY
@@ -309,7 +299,6 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     if bottom_imgs:
         x = margin
         y_img = 150
-
         for img in bottom_imgs:
             thumb = fit_image(img, (200, 130))
             b = io.BytesIO()
@@ -331,15 +320,10 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
 
     c.drawRightString(w - margin, 40, f"Contact by {listing.get('deadline','')}")
 
-    # ---------------------------------------------------------
-    # FINALIZE PDF
-    # ---------------------------------------------------------
     c.showPage()
     c.save()
     mem.seek(0)
     return mem.getvalue()
-
-
 
 
 def scrape_templates(query, urls):
@@ -372,7 +356,6 @@ def save_listing(headline, price, location, deadline, agent, details, canva_url)
         "deadline": str(deadline),
         "agent": agent,
         "details": details,
-        "promo": f"{details} ",
         "canva_url": canva_url,
     }
 
@@ -394,9 +377,9 @@ with tabs[0]:
         deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
         agent = st.text_input("Agent contact", st.session_state.listing.get("agent", "Angela Lee | 555-0100"))
         details = st.text_area(
-            "Property details",
+            "Property details (intro, up to 2 paragraphs)",
             st.session_state.listing.get("details", "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard."),
-            height=120,
+            height=140,
         )
         canva_url = st.text_input("Optional Canva artwork link", st.session_state.listing.get("canva_url", ""))
 
@@ -409,8 +392,8 @@ listing = st.session_state.listing or {
     "price": "$1,750,000",
     "location": "Austin, TX",
     "deadline": str(date.today() + timedelta(days=21)),
-    "agent": "Angela Tan | 9555-0100",
-    "details": "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard.",
+    "agent": "Angela Lee | 555-0100",
+    "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with easy access to parks and amenities.",
     "canva_url": "",
 }
 images = st.session_state.get("images", [])
@@ -419,17 +402,33 @@ with tabs[1]:
     st.subheader("Editable brochure layout")
     c1, c2 = st.columns([.48, .52])
     with c1:
-        # Link headline & promo directly to listing (single source of truth)
         edit_headline = listing.get("headline", "")
-        edit_promo = listing.get("promo", "")
-        # Allow highlights/footer to be tweaked if needed
-        edit_highlights = st.text_area("Highlights", listing.get("promo", ""), height=120)
+
+        about_text = st.text_area(
+            "About This Property (intro, up to 2 paragraphs)",
+            listing.get("details", ""),
+            height=140,
+        )
+
+        default_highlights = "\n".join([
+            "Direct access to retail mall, MRT and bus interchange",
+            "Near renowned schools and education clusters",
+            "Green boulevard linking to nearby parks and eco corridors",
+            "Close to key business hubs and job centers",
+            "Family-friendly facilities and modern amenities",
+        ])
+        highlights_text = st.text_area(
+            "Why We Recommend (one highlight per line, up to 5)",
+            default_highlights,
+            height=140,
+        )
+
         edit_footer = st.text_input("Footer/contact line", listing.get("agent", ""))
 
         st.markdown("### Brochure font sizes (2px steps)")
-        title_size = st.slider("Title font size", 18, 60, 23, step=2)
+        title_size = st.slider("Title font size", 18, 60, 26, step=2)
         body_size = st.slider("Body font size", 10, 24, 12, step=2)
-        footer_size = st.slider("Footer font size", 10, 20, 11, step=2)
+        footer_size = st.slider("Footer font size", 10, 20, 12, step=2)
 
         st.markdown("### Brochure style options")
         accent_color = st.color_picker("Accent color (price badge)", "#d94f30")
@@ -452,8 +451,8 @@ with tabs[1]:
             images,
             {
                 "headline": edit_headline,
-                "promo": edit_highlights,
-                "highlights": edit_promo,
+                "about": about_text,
+                "highlights": highlights_text,
                 "footer": edit_footer,
                 "title_size": title_size,
                 "body_size": body_size,
@@ -473,14 +472,22 @@ with tabs[1]:
         elif images:
             st.image(images[0][1], caption="Hero image preview", use_container_width=True)
 
+        about_html = "<br>".join(about_text.split("\n"))
+        highlights_lines = [l.strip() for l in highlights_text.split("\n") if l.strip()][:5]
+        highlights_html = "<br>".join("• " + l for l in highlights_lines)
+
         st.markdown(f"""
         <div class='preview'>
           <div class='hero'>
-            <div><span class='price'>{listing.get('price','')}</span><h2>{edit_headline}</h2><div>{listing.get('location','')}</div></div>
+            <div>
+              <h2>{listing.get('headline','')}</h2>
+              <div>{listing.get('location','')}</div>
+              <div class='price'>{listing.get('price','')}</div>
+            </div>
           </div>
           <div class='grid2'>
-            <div><b>About This Property</b><br><span class='small'>{edit_promo}</span></div>
-            <div><b>Why We Recommend</b><br><span class='small'>{edit_highlights}</span></div>
+            <div><b>About This Property</b><br><span class='small'>{about_html}</span></div>
+            <div><b>Why We Recommend</b><br><span class='small'>{highlights_html}</span></div>
           </div>
           <div style='padding:14px 18px;background:#10252b;color:white'>{edit_footer} | Contact by {listing.get('deadline','')}</div>
         </div>
@@ -491,7 +498,6 @@ with tabs[2]:
     selected = st.multiselect("Social sizes", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
     preview_size = st.selectbox("Preview size", list(SOCIAL_SIZES), index=1)
 
-    # Social headline always linked to listing headline
     social_headline = listing.get("headline", "")
     social_font_size = st.slider("Social headline font size", 32, 96, 64)
     social_photo = None
