@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     f'<div class="title">{APP_NAME}</div>'
-    '<div class="sub">Real estate management, creative and finances dashboard.</div>',
+    '<div class="sub">Singapore real estate multi-property tracker, marketing engine, and ABSD revenue desk.</div>',
     unsafe_allow_html=True
 )
 
@@ -47,7 +47,7 @@ if "properties" not in st.session_state:
             "price": "$1,750,000",
             "location": "Tampines North, Singapore",
             "deadline": str(date.today() + timedelta(days=21)),
-            "agent": "Angela Tan: 9123 4567",
+            "agent": "Angela Lee | 65-9123-4567",
             "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with integrated retail mall access.",
             "canva_url": "",
             "status": "Available",
@@ -431,14 +431,16 @@ with tabs[0]:
         in_details = st.text_area("Description", listing.get("details", ""), height=120)
         in_comm = st.slider(
             "Agent Fee Share Commission %",
-            1.0,
-            3.0,
+            0.0,
+            5.0,
             float(listing.get("commission_rate", 2.0)),
             step=0.1
         )
         in_status = st.selectbox(
             "Status",
-            ["Available", "In Progress", "Sold"]
+            ["Available", "Offer Received", "Sold", "Archived"],
+            index=["Available", "Offer Received", "Sold", "Archived"].index(
+                listing.get("status", "Available")
             )
         )
         
@@ -615,7 +617,7 @@ with tabs[3]:
         client = st.text_input("Prospect Name", "Michael Tan")
         appt_date = st.date_input("Scheduled Showing Date", date.today() + timedelta(days=2))
         status = st.selectbox(
-            "Status",
+            "Deal Status",
             ["Scheduled", "Shown", "Offer Table", "Under Contract", "Closed / Settled", "Lost / Cancelled"]
         )
         notes = st.text_area("Remarks", "Reviewing ABSD liability brackets for multiple properties.")
@@ -628,8 +630,8 @@ with tabs[3]:
                 "client": client,
                 "date": str(appt_date),
                 "status": status,
-                "price_offer": derived_revenue,
-                "remarks": notes
+                "revenue_basis": derived_revenue,
+                "notes": notes
             })
             st.success("Scheduled")
             
@@ -638,53 +640,85 @@ with tabs[3]:
         st.markdown("### Master Lead Interactivity Ledger")
         st.dataframe(appts, use_container_width=True)
 
-# --- TAB 5: POTENTIAL EARNINGS & COMMISSION DASHBOARD ---
+# --- TAB 5: ABSD & REVENUE REPORTING (SINGAPORE COMPLIANCE) ---
 with tabs[4]:
-    st.subheader("Potential Earnings & Commission Dashboard")
+    st.subheader("Commission Dashboard")
     
-    # Initialize closed deals in session state
-    if "closed_deals" not in st.session_state:
-        st.session_state.closed_deals = []
-
-    # 1. Log a New Sale
-    with st.expander("Log a New Sale"):
-        with st.form("log_sale_form", clear_on_submit=True):
-            selected_listing = st.selectbox("Select Listing", [p['headline'] for p in st.session_state.properties])
-            sale_price = st.number_input("Final Sale Price (SGD)", value=1000000.0, step=1000.0)
-            comm_rate = st.number_input("Commission Rate (%)", value=2.5, step=0.1)
-            
-            if st.form_submit_button("Log Sale"):
-                earned = sale_price * (comm_rate / 100)
-                st.session_state.closed_deals.append({
-                    "Property": selected_listing,
-                    "Price": sale_price,
-                    "Commission": earned
-                })
-                st.success(f"Logged {selected_listing} with earnings ${earned:,.2f}")
-
-    # 2. View and Delete Records
-    st.markdown("### Closed Deal Registry")
-    if st.session_state.closed_deals:
-        df_deals = pd.DataFrame(st.session_state.closed_deals)
-        # Add a selection column for deletion
-        edited_df = st.data_editor(
-            df_deals, 
-            use_container_width=True, 
-            column_config={"_index": None}
+    val_base = parse_price_to_float(listing.get("price", "0"))
+    st.metric(
+        label="Asset Basis Valuation",
+        value=f"SGD ${val_base:,.2f}"
+    )
+    
+    st.markdown("---")
+    st.markdown("### 1. ABSD Exposure Estimator Matrix")
+    
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        buyer_profile = st.selectbox(
+            "Buyer Demographic Profile Tier",
+            ["Singapore Citizen", "Singapore Permanent Resident", "Foreigner"]
+        )
+        property_holding = st.selectbox(
+            "Buyer Household Holding Status",
+            ["1st Property", "2nd Property", "3rd Property+"]
+        )
+    with rc2:
+        absd_fee, active_rate = calculate_singapore_absd(val_base, buyer_profile, property_holding)
+        st.metric(
+            label="Estimated ABSD Percentage Rate Apply",
+            value=f"{active_rate * 100:.1f}%"
+        )
+        st.metric(
+            label="Calculated ABSD Liability Charge Due",
+            value=f"SGD ${absd_fee:,.2f}"
         )
         
-        if st.button("Delete Selected Records"):
-            # This logic assumes you want to clear/update based on the current state
-            # For a production app, consider adding a specific checkbox column
-            st.session_state.closed_deals = [] # Resets for simplicity, or implement index filtering
-            st.rerun()
-
-        # 3. Chart Generation
-        st.markdown("### Commission Performance Chart")
-        chart_data = df_deals.groupby("Property")["Commission"].sum()
-        st.bar_chart(chart_data)
+    st.markdown("---")
+    st.markdown("### 2. End-of-Day Agent Payout & Revenue Tracking Summary")
+    st.markdown(
+        "Track realized financial metrics based on entries marked as **Sold** "
+        "within your active tracking matrix ledger database."
+    )
+    
+    total_pipeline_volume = 0.0
+    total_realized_fees = 0.0
+    closed_properties_list = []
+    
+    for p in st.session_state.properties:
+        if p.get("status") == "Sold":
+            p_val = parse_price_to_float(p.get("price", "0"))
+            rate = float(p.get("commission_rate", 2.5)) / 100.0
+            earned = p_val * rate
+            total_pipeline_volume += p_val
+            total_realized_fees += earned
+            closed_properties_list.append({
+                "Property ID": p['id'],
+                "Headline": p['headline'],
+                "Closing Value": p_val,
+                "Fee Share %": f"{p['commission_rate']}%",
+                "Your Net Payout Revenue": earned
+            })
+            
+    kc1, kc2 = st.columns(2)
+    with kc1:
+        st.metric(
+            label="Total Closed Transaction Portfolio Volume",
+            value=f"SGD ${total_pipeline_volume:,.2f}"
+        )
+    with kc2:
+        st.metric(
+            label="Net Agent Payout Commission Capital (End-of-Day Received)",
+            value=f"SGD ${total_realized_fees:,.2f}",
+            delta="Realized Revenue Flow"
+        )
         
-        # Totals
-        st.metric("Total Realized Commission", f"SGD ${df_deals['Commission'].sum():,.2f}")
+    if closed_properties_list:
+        st.markdown("#### Itemized Closed Deal Registry Rows")
+        st.dataframe(pd.DataFrame(closed_properties_list), use_container_width=True, hide_index=True)
     else:
-        st.info("No sales logged yet. Use the 'Log a New Sale' form above.")
+        st.info(
+            "No transaction properties are marked as 'Sold' within your master track registry folder yet. "
+            "Move an asset status element to 'Sold' under the 'Property Ledger' or 'Listing Entry' workspace "
+            "to compute real-time commission payout structures."
+        )
