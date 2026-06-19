@@ -431,8 +431,8 @@ with tabs[0]:
         in_details = st.text_area("Description", listing.get("details", ""), height=120)
         in_comm = st.slider(
             "Agent Fee Share Commission %",
-            0.0,
-            5.0,
+            1.0,
+            3.0,
             float(listing.get("commission_rate", 2.0)),
             step=0.1
         )
@@ -617,7 +617,7 @@ with tabs[3]:
         client = st.text_input("Prospect Name", "Michael Tan")
         appt_date = st.date_input("Scheduled Showing Date", date.today() + timedelta(days=2))
         status = st.selectbox(
-            "Deal Status",
+            "Status",
             ["Scheduled", "Shown", "Offer Table", "Under Contract", "Closed / Settled", "Lost / Cancelled"]
         )
         notes = st.text_area("Remarks", "Reviewing ABSD liability brackets for multiple properties.")
@@ -630,8 +630,8 @@ with tabs[3]:
                 "client": client,
                 "date": str(appt_date),
                 "status": status,
-                "revenue_basis": derived_revenue,
-                "notes": notes
+                "price_offer": derived_revenue,
+                "remarks": remarks
             })
             st.success("Scheduled")
             
