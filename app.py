@@ -436,12 +436,10 @@ with tabs[0]:
             float(listing.get("commission_rate", 2.0)),
             step=0.1
         )
-        in_status = st.selectbox(
-            "Status",
-            ["Available", "Offer Received", "Sold", "Archived"],
-            index=["Available", "Offer Received", "Sold", "Archived"].index(
-                listing.get("status", "Available")
-            )
+            in_status = st.selectbox("Status", ["Available", "In Progress", "Sold"], index=["Available", "In Progress", "Sold"].index(listing.get("status", "Available")))
+        if st.button("Submit"):
+            listing.update({"headline": in_headline, "price": in_price, "status": in_status})
+            st.success("Updated!")
         )
         
         if st.button("Submit"):
