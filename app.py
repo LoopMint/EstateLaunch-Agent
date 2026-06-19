@@ -227,13 +227,13 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # ---------------------------------------------------------
     # HEADLINE, LOCATION, PRICE (Rendered inside hero area)
     # ---------------------------------------------------------
-    col_pad = 40
+    col_pad = 25
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", edits.get("title_size", 26))
     c.drawString(safe + col_pad, hero_y + 60, edits["headline"][:70])
 
     c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(safe + col_pad, hero_y + 38, listing.get("location", ""))
+    c.drawString(safe + col_pad, hero_y + 38, listing.get("location", "")[:70])
 
     c.setFillColor(accent_color)
     c.roundRect(safe + col_pad, hero_y + 16, 170, 32, 6, stroke=0, fill=1)
@@ -242,7 +242,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.drawString(safe + col_pad + 10, hero_y + 26, listing.get("price", ""))
 
     # ---------------------------------------------------------
-    # TWO COLUMNS — About This Property / Why We Recommend
+    # TWO COLUMNS — About The Property / Why We Recommend
     # ---------------------------------------------------------
     col_w = (usable_w / 2) - col_pad - 10
     left_x = safe + col_pad
@@ -254,7 +254,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # LEFT COLUMN 
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(left_x, y_left, "About This Property")
+    c.drawString(left_x, y_left, "About The Property")
     y_left -= 28
 
     c.setFont("Helvetica", edits.get("body_size", 12))
