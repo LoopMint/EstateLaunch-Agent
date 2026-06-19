@@ -4,4 +4,4 @@ requests
 beautifulsoup4
 Pillow
 reportlab
-
+streamlit-ckeditor==0.0.4
