@@ -18,7 +18,7 @@ APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
 st.markdown("""
 <style>
-.block-container{max-width:1240px;padding-top:0rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.block-container{max-width:1240px;padding-top:5rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .title{font-size:2rem;font-weight:800;color:#17202a}
 .sub{color:#5d6673;margin:.2rem 0 1rem}
 .panel{border:1px solid #dfe5ec;border-radius:8px;padding:1rem;background:white;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:.75rem}
@@ -408,11 +408,11 @@ with tabs[0]:
         deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
         agent = st.text_input("Agent contact", st.session_state.listing.get("agent", "Angela Lee | 555-0100"))
         details = st.text_area(
-            "Property details (intro, up to 2 paragraphs)",
+            "Property details (keep to 1 short paragraph)",
             st.session_state.listing.get("details", "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard."),
             height=140,
         )
-        canva_url = st.text_input("Optional Canva artwork link", st.session_state.listing.get("canva_url", ""))
+        canva_url = st.text_input("Optional Canva link for safekeeping", st.session_state.listing.get("canva_url", ""))
 
         if st.button("Save listing package"):
             save_listing(headline, price, location, deadline, agent, details, canva_url)
