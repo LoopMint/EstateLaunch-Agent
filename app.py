@@ -330,11 +330,11 @@ with tabs[0]:
             st.success("Listing package saved.")
 
 listing = st.session_state.listing or {
-    "headline": "Modern Family Home With Designer Finishes",
-    "price": "$749,000",
+    "headline": "ParkTown Residences",
+    "price": "$1,750,000",
     "location": "Austin, TX",
     "deadline": str(date.today() + timedelta(days=21)),
-    "agent": "Angela Lee | 555-0100",
+    "agent": "Angela Tan | 9555-0100",
     "details": "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard.",
     "canva_url": "",
 }
@@ -389,8 +389,8 @@ with tabs[1]:
             <div><span class='price'>{listing.get('price','')}</span><h2>{edit_headline}</h2><div>{listing.get('location','')}</div></div>
           </div>
           <div class='grid2'>
-            <div><b>Highlights</b><br><span class='small'>{edit_highlights}</span></div>
-            <div><b>Buyer hook</b><br><span class='small'>{edit_promo}</span></div>
+            <div><b>About This Property</b><br><span class='small'>{edit_highlights}</span></div>
+            <div><b>Why We Recommend</b><br><span class='small'>{edit_promo}</span></div>
           </div>
           <div style='padding:14px 18px;background:#10252b;color:white'>{edit_footer} | Contact by {listing.get('deadline','')}</div>
         </div>
