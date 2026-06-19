@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     f'<div class="title">{APP_NAME}</div>'
-    '<div class="sub">Real estate management, creative and finances dashboard.</div>',
+    '<div class="sub">Singapore real estate multi-property tracker, marketing engine, and ABSD revenue desk.</div>',
     unsafe_allow_html=True
 )
 
@@ -47,7 +47,7 @@ if "properties" not in st.session_state:
             "price": "$1,750,000",
             "location": "Tampines North, Singapore",
             "deadline": str(date.today() + timedelta(days=21)),
-            "agent": "Angela Tan: 9123 4567",
+            "agent": "Angela Lee | 65-9123-4567",
             "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with integrated retail mall access.",
             "canva_url": "",
             "status": "Available",
@@ -438,7 +438,9 @@ with tabs[0]:
         )
         in_status = st.selectbox(
             "Status",
-            ["Available", "In Progress", "Sold"]
+            ["Available", "Offer Received", "Sold", "Archived"],
+            index=["Available", "Offer Received", "Sold", "Archived"].index(
+                listing.get("status", "Available")
             )
         )
         
@@ -720,35 +722,3 @@ with tabs[4]:
             "Move an asset status element to 'Sold' under the 'Property Ledger' or 'Listing Entry' workspace "
             "to compute real-time commission payout structures."
         )
-
-# --- TAB 6: COMMISSION DASHBOARD ---
-with tabs[5]:
-    st.subheader("Potential Earnings & Commission Dashboard")
-    
-    with st.expander("Log a New Sale"):
-        with st.form("log_sale_form", clear_on_submit=True):
-            selected_listing = st.selectbox("Select Listing", [p['headline'] for p in st.session_state.properties])
-            sale_price = st.number_input("Final Sale Price (SGD)", value=1000000.0, step=1000.0)
-            comm_rate = st.number_input("Commission Rate (%)", value=2.5, step=0.1)
-            if st.form_submit_button("Log Sale"):
-                earned = sale_price * (comm_rate / 100)
-                st.session_state.closed_deals.append({"Property": selected_listing, "Price": sale_price, "Commission": earned})
-                st.rerun()
-
-    st.markdown("### Closed Deal Registry")
-    if st.session_state.closed_deals:
-        df_deals = pd.DataFrame(st.session_state.closed_deals)
-        # Display as editable table
-        edited_df = st.data_editor(df_deals, use_container_width=True)
-        
-        if st.button("Delete Selected Records"):
-            # Update state with whatever is currently in the editor (or clear all)
-            st.session_state.closed_deals = edited_df.to_dict('records')
-            st.rerun()
-
-        st.markdown("### Commission Performance Chart")
-        chart_data = df_deals.groupby("Property")["Commission"].sum()
-        st.bar_chart(chart_data)
-        st.metric("Total Realized Commission", f"SGD ${df_deals['Commission'].sum():,.2f}")
-    else:
-        st.info("No sales logged yet.")
