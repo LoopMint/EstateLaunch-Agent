@@ -298,7 +298,7 @@ def save_listing(headline, price, location, deadline, agent, details, canva_url)
         "deadline": str(deadline),
         "agent": agent,
         "details": details,
-        "promo": f"Discover {headline} in {location}. {details} ",
+        "promo": f"{details} ",
         "canva_url": canva_url,
     }
 
