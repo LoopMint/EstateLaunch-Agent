@@ -378,12 +378,11 @@ def calculate_singapore_absd(property_value, profile, property_count):
 
 # --- Tab Layout Grid System ---
 tabs = st.tabs([
-    "Listing Entry",
-    "Brochure PDF",
-    "Social Media",
-    "Appointment",
-    "ABSD & Revenue Reporting",
-    "Property Ledger"
+    "Property Info",
+    "Creative Design",
+    "Social Media Plan",
+    "Set Appointment",
+    "Commission Dashboard"
 ])
 
 # Find active record payload context matching tracking focus selection
@@ -425,16 +424,16 @@ with tabs[0]:
             )
     with col2:
         in_headline = st.text_input("Property Name", listing.get("headline", ""))
-        in_price = st.text_input("Price Target (SGD / USD)", listing.get("price", ""))
+        in_price = st.text_input("Price", listing.get("price", ""))
         in_location = st.text_input("Location / Sector", listing.get("location", ""))
         in_deadline = st.date_input("Offer Closing Date", date.today() + timedelta(days=21))
-        in_agent = st.text_input("Primary Agent", listing.get("agent", ""))
+        in_agent = st.text_input("Agent", listing.get("agent", ""))
         in_details = st.text_area("Description", listing.get("details", ""), height=120)
         in_comm = st.slider(
             "Agent Fee Share Commission %",
             0.0,
-            10.0,
-            float(listing.get("commission_rate", 2.5)),
+            5.0,
+            float(listing.get("commission_rate", 2.0)),
             step=0.1
         )
         in_status = st.selectbox(
@@ -486,29 +485,29 @@ with tabs[1]:
     c1, c2 = st.columns([.48, .52])
     with c1:
         edit_headline = listing.get("headline", "")
-        about_text = st.text_area("Core Summary Copy Block", listing.get("details", ""), height=140)
+        about_text = st.text_area("Body Copy", listing.get("details", ""), height=140)
         default_highlights = (
             "Premium mass transit access grid linkages\n"
             "Elite scholastic infrastructure zones\n"
             "High capital performance history"
         )
         highlights_text = st.text_area(
-            "Advantage Callouts (One line per item)",
+            "Why We Recommend (One line per item)",
             default_highlights,
             height=100
         )
-        edit_footer = st.text_input("Footer Verification Track", listing.get("agent", ""))
+        edit_footer = st.text_input("Footer Text", listing.get("agent", ""))
 
-        title_size = st.slider("Title Size Scaling", 18, 60, 26, step=2)
-        body_size = st.slider("Body Text Formatting Size", 10, 24, 12, step=2)
-        accent_color = st.color_picker("Brand Highlight Asset Color Picker", "#d94f30")
-        footer_color = st.color_picker("Structural Framing Base Block Color", "#10252b")
+        title_size = st.slider("Title Size", 18, 60, 26, step=2)
+        body_size = st.slider("Body Text Size", 10, 24, 12, step=2)
+        accent_color = st.color_picker("Price Color", "#d94f30")
+        footer_color = st.color_picker("Footer Color", "#10252b")
 
         hero_choice = None
         bottom_choices = []
         if images:
             hero_choice = st.selectbox(
-                "Assign Hero Placement Asset Photo",
+                "Header Image",
                 options=[name for name, _ in images],
                 index=0
             )
@@ -535,9 +534,9 @@ with tabs[1]:
             footer_hex=footer_color
         )
         
-        st.markdown("### Collateral Package Generation Track")
+        st.markdown("### Generate Creative")
         st.download_button(
-            "Download Print (PDF)",
+            "Download Flyer PDF",
             pdf_data,
             file_name="estate_brochure.pdf",
             mime="application/pdf",
@@ -562,11 +561,11 @@ with tabs[1]:
             </div>
           </div>
           <div class='grid2'>
-            <div><b>About Layout Focus</b><br><span class='small'>{about_html}</span></div>
+            <div><b>About The Property</b><br><span class='small'>{about_html}</span></div>
             <div><b>Why We Recommend</b><br><span class='small'>{highlights_html}</span></div>
           </div>
           <div style='padding:14px 18px;background:{footer_color};color:white'>
-            {edit_footer} | Closing Track Target: {listing.get('deadline','')}
+            {edit_footer} | Closing Date: {listing.get('deadline','')}
           </div>
         </div>
         """, unsafe_allow_html=True)
@@ -643,11 +642,11 @@ with tabs[3]:
 
 # --- TAB 5: ABSD & REVENUE REPORTING (SINGAPORE COMPLIANCE) ---
 with tabs[4]:
-    st.subheader("Singapore Property Analysis & Commission Revenue Dashboard")
+    st.subheader("Commission Dashboard")
     
     val_base = parse_price_to_float(listing.get("price", "0"))
     st.metric(
-        label="Active Asset Basis Valuation (Derived from active listing field)",
+        label="Asset Basis Valuation",
         value=f"SGD ${val_base:,.2f}"
     )
     
@@ -722,24 +721,4 @@ with tabs[4]:
             "No transaction properties are marked as 'Sold' within your master track registry folder yet. "
             "Move an asset status element to 'Sold' under the 'Property Ledger' or 'Listing Entry' workspace "
             "to compute real-time commission payout structures."
-        )
-
-# --- FINAL TAB: PROPERTY LEDGER (Tablet View) ---
-with tabs[5]:
-    st.subheader("Portfolio Ledger — All Properties")
-
-    if st.session_state.properties:
-        df = pd.DataFrame(st.session_state.properties)
-        df_display = df[["id", "headline", "price", "location", "status", "commission_rate"]].copy()
-
-        edited_df = st.data_editor(
-            df_display,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "status": st.column_config.SelectboxColumn(
-                    "Status",
-                    options=["Available", "Offer Received", "Sold", "Archived"]
-                )
-            }
         )
