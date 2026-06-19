@@ -250,16 +250,27 @@ def calculate_singapore_absd(property_value, profile, property_count):
 tabs = st.tabs(["Property Portfolio Ledger", "Listing Entry", "Brochure PDF", "Social Media Plan", "Appointment", "Finance Reports"])
 
 # --- TAB 1: PROPERTY PORTFOLIO LEDGER ---
+# --- TAB 1: PROPERTY PORTFOLIO LEDGER ---
 with tabs[0]:
     st.subheader("Accumulated Property Portfolio Hub")
-    st.markdown("Review and manage your complete property pipeline dataset below. Modifications to **Status** and **Remarks** save directly to memory.")
     
     if st.session_state.properties:
-        ledger_df = pd.DataFrame(st.session_state.properties)
+        # Create DataFrame and ensure all required columns exist
+        df_full = pd.DataFrame(st.session_state.properties)
         
-        # Interactive Editing Grid for Status and Remarks
+        # Define the exact columns you want to show
+        required_cols = ["id", "headline", "price", "location", "status", "remarks"]
+        
+        # Fill missing columns with None to prevent KeyError
+        for col in required_cols:
+            if col not in df_full.columns:
+                df_full[col] = None
+        
+        st.markdown("Review and manage your property pipeline below.")
+        
+        # Interactive Editing Grid
         edited_ledger = st.data_editor(
-            ledger_df[["id", "headline", "price", "location", "status", "remarks"]],
+            df_full[required_cols],
             column_config={
                 "status": st.column_config.SelectboxColumn("Status", options=["Available", "Offer Received", "Sold", "Archived"], width="medium"),
                 "remarks": st.column_config.TextColumn("Agent Remarks", width="large"),
@@ -273,12 +284,14 @@ with tabs[0]:
             key="ledger_editor"
         )
         
-        # Sync changes back to main session state
+        # Sync changes back to session state
         for idx, row in edited_ledger.iterrows():
             for prop in st.session_state.properties:
-                if prop["id"] == row["id"]:
+                if prop.get("id") == row["id"]:
                     prop["status"] = row["status"]
                     prop["remarks"] = row["remarks"]
+        
+        # ... (keep your existing Selection and Purge logic here)
 
         # Selection Engine for Global Focus Setup
         prop_options = {f"{p['headline']} ({p['price']})": p['id'] for p in st.session_state.properties}
