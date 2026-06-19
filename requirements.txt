@@ -1,6 +1,7 @@
-streamlit
+﻿streamlit
 pandas
 requests
 beautifulsoup4
 Pillow
 reportlab
+
