@@ -196,7 +196,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     w, h = letter
 
     # Global 5px safe area margin
-    safe = 0
+    safe = 5
     usable_w = w - (safe * 2)
     hero_h = 300
     line_gap = 18
@@ -225,24 +225,47 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
         c.rect(safe, hero_y, usable_w, hero_h, stroke=0, fill=1)
 
     # ---------------------------------------------------------
-    # HEADLINE, LOCATION, PRICE (Rendered inside hero area)
+    # HEADLINE, LOCATION, PRICE (Dynamically Spaced)
     # ---------------------------------------------------------
-    col_pad = 25
+    col_pad = 40
+    title_size = edits.get("title_size", 26)
+    body_size = edits.get("body_size", 12)
+    
+    # Calculate price dimensions first to stack from the bottom up
+    price_text = listing.get("price", "")
+    price_font_size = body_size + 2
+    c.setFont("Helvetica-Bold", price_font_size)
+    price_width = c.stringWidth(price_text, "Helvetica-Bold", price_font_size)
+    
+    pad = 2  # 2px padding strictly as requested
+    box_w = price_width + (pad * 2)
+    box_h = price_font_size + (pad * 2) + 2  # slight vertical buffer
+    
+    # Dynamic stacking to avoid overlap
+    price_box_y = hero_y + 20
+    loc_y = price_box_y + box_h + 10
+    title_y = loc_y + body_size + 14
+
+    # Draw Headline
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("title_size", 26))
-    c.drawString(safe + col_pad, hero_y + 60, edits["headline"][:70])
+    c.setFont("Helvetica-Bold", title_size)
+    c.drawString(safe + col_pad, title_y, edits["headline"][:70])
 
-    c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(safe + col_pad, hero_y + 60, listing.get("location", ""))
+    # Draw Location
+    c.setFont("Helvetica", body_size)
+    c.drawString(safe + col_pad, loc_y, listing.get("location", ""))
 
+    # Draw Price Box & Text
     c.setFillColor(accent_color)
-    c.roundRect(safe + col_pad, hero_y + 16, 170, 32, 6, stroke=0, fill=1)
+    c.roundRect(safe + col_pad, price_box_y, box_w, box_h, 4, stroke=0, fill=1)
+    
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 2)
-    c.drawString(safe + col_pad + 10, hero_y + 26, listing.get("price", ""))
+    c.setFont("Helvetica-Bold", price_font_size)
+    # Position text inside box perfectly
+    c.drawString(safe + col_pad + pad, price_box_y + pad + 1, price_text)
 
     # ---------------------------------------------------------
-    # TWO COLUMNS — About The Property / Why We Recommend
+    # TWO COLUMNS — About This Property / Why We Recommend
     # ---------------------------------------------------------
     col_w = (usable_w / 2) - col_pad - 10
     left_x = safe + col_pad
@@ -253,17 +276,17 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
 
     # LEFT COLUMN 
     c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(left_x, y_left, "About The Property")
+    c.setFont("Helvetica-Bold", body_size + 5)
+    c.drawString(left_x, y_left, "About This Property")
     y_left -= 28
 
-    c.setFont("Helvetica", edits.get("body_size", 12))
+    c.setFont("Helvetica", body_size)
     c.setFillColor(colors.HexColor("#33404d"))
 
     about_paras = [p.strip() for p in edits["about"].split("\n") if p.strip()][:2]
 
     for para in about_paras:
-        wrapped = wrap_pdf(c, para, "Helvetica", edits.get("body_size", 12), col_w)
+        wrapped = wrap_pdf(c, para, "Helvetica", body_size, col_w)
         for line in wrapped:
             c.drawString(left_x, y_left, line)
             y_left -= line_gap
@@ -272,22 +295,27 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
 
     # RIGHT COLUMN 
     c.setFillColor(colors.HexColor("#17202a"))
-    c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
+    c.setFont("Helvetica-Bold", body_size + 5)
     c.drawString(right_x, y_right, "Why We Recommend")
     y_right -= 28
 
-    c.setFont("Helvetica", edits.get("body_size", 12))
+    c.setFont("Helvetica", body_size)
     c.setFillColor(colors.HexColor("#33404d"))
 
     highlight_lines = [l.strip() for l in edits["highlights"].split("\n") if l.strip()][:5]
+    
+    # Calculate exact bullet width for a perfect hanging indent
+    bullet_symbol = "• "
+    bullet_w = c.stringWidth(bullet_symbol, "Helvetica", body_size)
 
     for item in highlight_lines:
-        wrapped = wrap_pdf(c, item, "Helvetica", edits.get("body_size", 12), col_w - 14)
+        wrapped = wrap_pdf(c, item, "Helvetica", body_size, col_w - bullet_w)
         for i, line in enumerate(wrapped):
             if i == 0:
-                c.drawString(right_x, y_right, "• " + line)
+                c.drawString(right_x, y_right, bullet_symbol)
+                c.drawString(right_x + bullet_w, y_right, line)
             else:
-                c.drawString(right_x + 14, y_right, line)
+                c.drawString(right_x + bullet_w, y_right, line)
             y_right -= line_gap
         y_right -= line_gap // 2
 
