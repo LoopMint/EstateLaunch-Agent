@@ -198,7 +198,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # GLOBAL PADDING
     margin = 55
     hero_h = 300
-    col_gap = 50
+    col_gap = 100
     line_gap = 18
 
     accent_color = colors.HexColor(accent_hex)
@@ -252,7 +252,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # LEFT COLUMN — About This Property (intro, up to 2 paragraphs)
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(left_x, y_left, "About This Property")
+    c.drawString(left_x, y_left, "About The Property")
     y_left -= 26
 
     c.setFont("Helvetica", edits.get("body_size", 12))
@@ -274,7 +274,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
     c.drawString(right_x, y_right, "Why We Recommend")
-    y_right -= 26
+    y_right -= 50
 
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
