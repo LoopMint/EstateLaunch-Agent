@@ -1,563 +1,3 @@
-
-I can generate the full code, but I can't see the complete Brochure PDF tab from the snippet you pasted. The code cuts off here:
-
-headline_font = font(max(42, int(w * 0.065)), True)
-To provide a working drop-in replacement, I need the full section that includes:
-
-Brochure PDF tab code
-
-PDF generation function
-
-Canva artwork section
-
-Upload/listing form section
-
-Any existing brochure preview code
-
-Paste either:
-
-The entire .py file, or
-
-Everything from:
-
-tab_brochure = ...
-through the end of the brochure/PDF logic.
-
-Then I can return a complete upgraded version with:
-
-✅ Hero image selector
-✅ Bottom gallery image selector
-✅ Rich text editor (Quill)
-✅ Live brochure preview
-✅ Brand colour picker
-✅ Font size controls
-✅ Remove Canva artwork button
-✅ Professional PDF layout
-✅ Download PDF button
-✅ QR code support
-✅ Agent branding section
-
-as a single ready-to-paste code block.
-
-
-
-
-
-
-
-app.py
-Python
-Besides brochure, it should allow real preview based on user selection of images. For social media assets, it should allow user to amend social media assets to select photos and font sizes then resize proportionately to the social media sizes.
-
-Template research to allow user to copy the text or click to generate sample, that is an AI Planner for ideation. 
-
-Is there a way to make the app UI like propertyguru vibe which is more saas and sellable, professional for commercial
-
-Yes. Looking at your code, it currently behaves like a generator, not a design studio. If your goal is to make it commercially sellable (PropertyGuru, 99.co, EdgeProp, AgentNet style), I would redesign the architecture rather than keep adding controls.
-
-1. Brochure Tab → Real Design Studio
-Current:
-
-Upload Images
-↓
-Generate PDF
-Target:
-
-Upload Images
-↓
-Select Layout
-↓
-Choose Hero Image
-↓
-Choose Gallery Images
-↓
-Live Preview
-↓
-Export PDF
-Add Layout Templates
-BROCHURE_TEMPLATES = {
-    "Luxury": {},
-    "Modern": {},
-    "Minimal": {},
-    "Commercial": {},
-    "Condo Launch": {}
-}
-Preview updates instantly.
-
-Hero Image Picker
-hero_image = st.selectbox(
-    "Hero Image",
-    image_names
-)
-Instead of always:
-
-images[0]
-Gallery Selector
-gallery = st.multiselect(
-    "Gallery Images",
-    image_names,
-    max_selections=6
-)
-Rich Text Editor
-Replace:
-
-st.text_area()
-with:
-
-st_quill()
-Features:
-
-Bold
-
-Italic
-
-Colour
-
-Font Size
-
-Alignment
-
-Lists
-
-Exactly like Canva.
-
-2. Real Preview Canvas
-Current preview:
-
-Static HTML Card
-Target:
-
-┌─────────────────────┐
-│ Hero Image          │
-├─────────────────────┤
-│ Headline            │
-│ Description         │
-├─────────────────────┤
-│ Gallery             │
-├─────────────────────┤
-│ Agent Contact       │
-└─────────────────────┘
-Rendered from PIL.
-
-Every change updates live.
-
-3. Social Media Studio
-Current:
-
-social_image(...)
-Always uses:
-
-images[0]
-New Layer System
-social_settings = {
-    "background": image3,
-    "headline": {
-        "size": 52,
-        "x": 100,
-        "y": 300
-    }
-}
-User controls:
-
-Photo
-
-Font size
-
-Position
-
-Colour
-
-Opacity
-
-Drag-and-Drop Text
-Use:
-
-streamlit-elements
-or
-
-streamlit-drawable-canvas
-User can drag:
-
-Price Badge
-Headline
-CTA
-Agent Info
-Logo
-Auto Responsive Scaling
-If user designs:
-
-Instagram Portrait
-System automatically generates:
-
-Facebook
-LinkedIn
-TikTok
-Story
-Square
-while preserving relative positioning.
-
-Example:
-
-x_ratio = x / design_width
-y_ratio = y / design_height
-Then resize.
-
-Huge commercial feature.
-
-4. AI Planner (Big Opportunity)
-Current:
-
-Template Research
-is just scraping.
-
-Replace with:
-
-AI Campaign Planner
-Generate Ideas
-User enters:
-
-Luxury Condo
-AI generates:
-
-Instagram Reel Ideas
-TikTok Ideas
-Facebook Ads
-Email Campaign
-Open House Campaign
-Example:
-
-Generate 10 campaign ideas
-One Click Copy
-st.code(text)
-or
-
-st.copy_button()
-Users copy directly.
-
-Generate Sample
-Button:
-
-Generate Example
-Creates:
-
-Caption
-Creative Direction
-Visual Layout
-Call To Action
-using listing info.
-
-5. PropertyGuru Style UI
-Current app looks like:
-
-Internal Tool
-because of:
-
-border:1px solid
-basic panels.
-
-Modern SaaS Layout
-Sidebar:
-
-🏠 Dashboard
-📄 Brochures
-📱 Social Media
-🤖 AI Planner
-📅 Appointments
-📈 Analytics
-⚙ Settings
-KPI Cards
-Top:
-
-Listings     24
-Brochures    53
-Campaigns    17
-Revenue      SGD 24,000
-Property Card Design
-Like PropertyGuru:
-
-┌─────────────────┐
-│ Hero Image      │
-├─────────────────┤
-│ $1.2M           │
-│ 4 Bed 3 Bath    │
-│ Orchard Road    │
-└─────────────────┘
-Dark Professional Theme
-Use:
-
-#0f172a
-#1e293b
-#334155
-with:
-
-border-radius:16px;
-backdrop-filter:blur();
-Looks enterprise.
-
-6. Commercial Features Worth Selling
-Instead of Canva links:
-
-Brand Kit
-Agency uploads:
-
-Logo
-Brand Colours
-Fonts
-Watermark
-Stored globally.
-
-Every brochure inherits it.
-
-QR Generator
-Automatically creates:
-
-WhatsApp
-Listing URL
-Calendly
-Property Website
-QR codes.
-
-AI Photo Selection
-AI ranks uploaded images:
-
-Best Hero Image
-Best Kitchen Shot
-Best Bedroom Shot
-Best Exterior Shot
-and suggests layout.
-
-Multi-Agent Accounts
-Admin
-Manager
-Agent
-Each with branding.
-
-This is the feature agencies pay for.
-
-If I were rebuilding EstateLaunch for sale, I'd structure it as:
-
-Dashboard
-├─ Listings
-├─ Design Studio
-│   ├─ Brochure Builder
-│   ├─ Social Studio
-│   └─ Brand Kit
-├─ AI Planner
-├─ CRM
-├─ Revenue
-└─ Analytics
-That would move it from a simple Streamlit utility into a SaaS platform that feels closer to PropertyGuru's professional agent tools.
-
-
-
-
-
-
-give me full app.py
-give me full app.py
-
-I can't safely give you a complete replacement app.py yet because the uploaded file shown in the conversation is truncated. I can see only part of the file, and a full rewrite would be 800–1500+ lines.
-
-Based on your requirements, the existing app needs major architectural changes:
-
-New modules I would add
-app.py
-
-components/
-├── design_studio.py
-├── social_studio.py
-├── ai_planner.py
-├── brochure_builder.py
-├── property_cards.py
-├── brand_kit.py
-
-utils/
-├── pdf_generator.py
-├── image_manager.py
-├── social_generator.py
-├── qr_generator.py
-├── template_research.py
-Major upgrades
-Design Studio
-Hero image picker
-
-Gallery image picker
-
-Drag-and-drop text blocks
-
-Brand colours
-
-Font sizing
-
-Rich text editor (Quill)
-
-Social Studio
-Choose different photo per platform
-
-Auto resize/reposition
-
-Layer editor
-
-Logo placement
-
-Watermark support
-
-Export all formats
-
-AI Planner
-Campaign ideas
-
-Caption generator
-
-Reel ideas
-
-Open house ideas
-
-Email ideas
-
-One-click copy
-
-PropertyGuru-style UI
-Sidebar navigation
-
-KPI cards
-
-Listing cards
-
-Analytics dashboard
-
-Dark/light themes
-
-Modern SaaS layout
-
-Brand Kit
-Agency logo
-
-Fonts
-
-Colours
-
-Default footer
-
-Watermark
-
-To generate the full upgraded app.py, I need the actual file contents, not the truncated preview.
-
-Please upload the real app.py file (or paste it in full), and I can then generate:
-
-Complete working app.py
-
-All required imports
-
-New CSS theme
-
-Design Studio
-
-Social Studio
-
-AI Planner
-
-PropertyGuru-inspired UI
-
-PDF generation enhancements
-
-Streamlit-compatible code
-
-as a single ready-to-run file.
-
-
-
-
-
-
-just give me the full code please
-
-I can't honestly provide a full working app.py from the information available because the file shown in the conversation is incomplete and cut off. If I invent the missing sections, you'll likely get import errors, broken tabs, missing session state variables, and PDF generation issues.
-
-What I can do is generate a completely new, production-style replacement app.py, but it would be a brand-new application rather than a guaranteed upgrade of your existing file.
-
-For a real full code delivery, I need the actual file contents. Since your file was uploaded, upload the raw app.py (not a screenshot/snippet), and I can then return a complete upgraded version with:
-
-PropertyGuru-style SaaS UI
-
-Design Studio
-
-Hero/gallery image selection
-
-Rich text editor (Quill)
-
-Live brochure preview
-
-Social media asset editor
-
-Auto-responsive resizing across platforms
-
-AI campaign planner
-
-Brand kit
-
-QR code generation
-
-PDF export
-
-CRM dashboard
-
-all integrated into a single working app.py.
-
-Right now, giving you a "full code" would be mostly fabricated because I don't have the complete source file.
-
-
-
-
-
-You’ve reached the Free limit for chats with attachments
-Upgrade now or wait until 1:59 PM to keep using files, or chat now without files.
-
-New chat
-
-Upgrade to Go
-ok just give me the modules to add on existing codes
-
-
-Library
-/
-app.py
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
 import io
 import re
 import zipfile
@@ -574,14 +14,39 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
+# ---------------------------------------------------------
+# APP CONFIG
+# ---------------------------------------------------------
+
 APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
+
 st.markdown("""
 <style>
-.block-container{max-width:1240px;padding-top:5.25rem}.title{font-size:2rem;font-weight:800;color:#17202a}.sub{color:#5d6673;margin:.2rem 0 1rem}.panel{border:1px solid #dfe5ec;border-radius:8px;padding:1rem;background:white;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:.75rem}.kpi{border-left:4px solid #1b6f6a;background:#f5f8fa;border-radius:6px;padding:.7rem 1rem}.tag{background:#e7f2f0;color:#164e4a;border-radius:99px;padding:.15rem .45rem;font-size:.78rem;font-weight:700}.preview{border:1px solid #d7dee7;border-radius:8px;overflow:hidden;background:#fff}.hero{min-height:310px;background:#10252b;color:white;display:flex;align-items:flex-end;padding:24px;background-size:cover;background-position:center}.hero h2{font-size:2.1rem;margin:0 0 4px}.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}.small{color:#66717e;font-size:.9rem}
+.block-container{max-width:1240px;padding-top:5.25rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.title{font-size:2rem;font-weight:800;color:#17202a}
+.sub{color:#5d6673;margin:.2rem 0 1rem}
+.navbar{display:flex;gap:.5rem;margin:1rem 0 1.5rem}
+.navbtn{flex:1;padding:.6rem .8rem;border-radius:8px;border:1px solid #dfe5ec;background:#f8fafc;color:#17202a;font-weight:600;text-align:center;cursor:pointer}
+.navbtn-active{background:#10252b;color:#ffffff;border-color:#10252b}
+.preview{border:1px solid #d7dee7;border-radius:8px;overflow:hidden;background:#fff}
+.hero{min-height:310px;background:#10252b;color:white;display:flex;align-items:flex-end;padding:24px;background-size:cover;background-position:center}
+.hero h2{font-size:2.1rem;margin:0 0 4px}
+.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
+.small{color:#66717e;font-size:.9rem}
 </style>
 """, unsafe_allow_html=True)
-st.markdown(f'<div class="title">{APP_NAME}</div><div class="sub">Real estate listing, brochure, Canva, social creative, appointment, and revenue workflow.</div>', unsafe_allow_html=True)
+
+st.markdown(
+    f'<div class="title">{APP_NAME}</div>'
+    '<div class="sub">Real estate listing, brochure, social creative, appointment, and revenue workflow.</div>',
+    unsafe_allow_html=True
+)
+
+# ---------------------------------------------------------
+# SESSION STATE
+# ---------------------------------------------------------
 
 if "listing" not in st.session_state:
     st.session_state.listing = {}
@@ -589,8 +54,369 @@ if "appointments" not in st.session_state:
     st.session_state.appointments = []
 if "template_notes" not in st.session_state:
     st.session_state.template_notes = []
+if "images" not in st.session_state:
+    st.session_state.images = []
+if "section" not in st.session_state:
+    st.session_state.section = "Listing"
+
+# ---------------------------------------------------------
+# CONSTANTS
+# ---------------------------------------------------------
 
 SOCIAL_SIZES = {
     "TikTok Portrait 1080x1920": (1080, 1920),
     "Instagram Portrait 1080x1350": (1080, 1350),
     "Instagram Square 1080x1080": (1080, 1080),
+    "Facebook Landscape 1200x630": (1200, 630),
+    "LinkedIn Landscape 1200x627": (1200, 627),
+    "Story/Reel Portrait 1080x1920": (1080, 1920),
+}
+
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
+
+def load_images(uploaded):
+    images = []
+    for file in uploaded or []:
+        try:
+            img = Image.open(io.BytesIO(file.getvalue())).convert("RGB")
+            images.append((file.name, img))
+        except Exception:
+            st.warning(f"Could not read image: {file.name}")
+    return images
+
+def fit_image(img, size):
+    return ImageOps.fit(img, size, method=Image.LANCZOS, centering=(0.5, 0.5))
+
+def html_to_plain(text):
+    soup = BeautifulSoup(text, "html.parser")
+    return " ".join(soup.get_text(" ").split())
+
+def wrap_text(draw, text, fnt, max_width):
+    words = str(text).split()
+    lines, line = [], ""
+    for word in words:
+        trial = (line + " " + word).strip()
+        width = draw.textbbox((0, 0), trial, font=fnt)[2]
+        if width <= max_width:
+            line = trial
+        else:
+            if line:
+                lines.append(line)
+            line = word
+    if line:
+        lines.append(line)
+    return lines
+
+def circular_image(img, diameter):
+    img = img.resize((diameter, diameter))
+    mask = Image.new("L", (diameter, diameter), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0, diameter, diameter), fill=255)
+    output = Image.new("RGBA", (diameter, diameter))
+    output.paste(img, (0, 0), mask)
+    return output
+
+# ---------------------------------------------------------
+# SOCIAL IMAGE GENERATOR
+# ---------------------------------------------------------
+
+def social_image(size, listing, images, platform, headline, font_size, selected_photo):
+    headline = html_to_plain(headline)
+    w, h = size
+    base = Image.new("RGB", size, "#10252b")
+
+    if images:
+        chosen = next((img for name, img in images if name == selected_photo), images[0][1])
+        base = fit_image(chosen, size)
+        overlay = Image.new("RGBA", size, (0, 0, 0, 95))
+        base = Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
+
+    draw = ImageDraw.Draw(base)
+    margin = max(42, int(w * 0.055))
+
+    price = listing.get("price", "$749,000")
+    location = listing.get("location", "Austin, TX")
+    agent = listing.get("agent", "Agent contact")
+    deadline = listing.get("deadline", str(date.today() + timedelta(days=21)))
+
+    # Price badge
+    badge_h = max(58, int(h * 0.045))
+    draw.rounded_rectangle((margin, margin, margin + int(w * 0.34), margin + badge_h),
+                           radius=10, fill="#d94f30")
+    draw.text((margin + 22, margin + 14), price, fill="white",
+              font=ImageFont.truetype("arialbd.ttf", max(26, int(w * 0.034))))
+
+    # Headline
+    headline_font = ImageFont.truetype("arialbd.ttf", font_size)
+    y = int(h * 0.55) if h > w else int(h * 0.34)
+
+    for line in wrap_text(draw, headline, headline_font, w - margin * 2)[:3]:
+        draw.text((margin, y), line, fill="white", font=headline_font)
+        y += int(headline_font.size * 1.12)
+
+    # Subline
+    sub = f"{location} | Contact by {deadline}"
+    draw.text((margin, y + 12), sub, fill="#f3f7f8",
+              font=ImageFont.truetype("arial.ttf", max(24, int(w * 0.028))))
+
+    # Footer bar
+    draw.rectangle((0, h - int(h * .12), w, h), fill="#10252b")
+    draw.text((margin, h - int(h * .08)),
+              f"{agent}  |  Schedule a showing",
+              fill="white", font=ImageFont.truetype("arialbd.ttf", max(24, int(w * 0.027))))
+
+    return base
+
+# ---------------------------------------------------------
+# BROCHURE PDF GENERATOR
+# ---------------------------------------------------------
+
+def make_brochure_pdf(listing, images, edits, hero_name, bottom_names, agent_photo_name,
+                      title_size, body_size, footer_size,
+                      accent_hex="#d94f30", footer_hex="#10252b"):
+
+    mem = io.BytesIO()
+    c = canvas.Canvas(mem, pagesize=letter)
+    w, h = letter
+    margin = 42
+    hero_h = 270
+
+    accent_color = colors.HexColor(accent_hex)
+    footer_color = colors.HexColor(footer_hex)
+
+    # Hero image
+    if images and hero_name:
+        hero_img = next((img for name, img in images if name == hero_name), images[0][1])
+        hero = fit_image(hero_img, (1100, 520))
+        b = io.BytesIO()
+        hero.save(b, format="JPEG", quality=90)
+        b.seek(0)
+        c.drawImage(ImageReader(b), 0, h - hero_h, width=w, height=hero_h,
+                    preserveAspectRatio=False, mask="auto")
+        c.setFillColor(colors.Color(0, 0, 0, alpha=.35))
+        c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
+
+    # Headline (Helvetica)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", title_size)
+    c.drawString(margin, h - 82, edits["headline"][:58])
+
+    # Location
+    c.setFont("Helvetica", body_size)
+    c.drawString(margin, h - 105, listing.get("location", ""))
+
+    # Price badge
+    c.setFillColor(accent_color)
+    c.roundRect(w - margin - 150, h - 92, 150, 36, 5, stroke=0, fill=1)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", body_size)
+    c.drawCentredString(w - margin - 75, h - 78, listing.get("price", ""))
+
+    # Highlights
+    y = h - hero_h - 34
+    c.setFillColor(colors.HexColor("#17202a"))
+    c.setFont("Helvetica-Bold", body_size + 2)
+    c.drawString(margin, y, "Property Highlights")
+    y -= 22
+
+    c.setFont("Helvetica", body_size)
+    c.setFillColor(colors.HexColor("#33404d"))
+    for line in edits["highlights"].split("\n"):
+        c.drawString(margin, y, line)
+        y -= 14
+
+    # Promo
+    y -= 8
+    c.setFont("Helvetica-Bold", body_size + 2)
+    c.setFillColor(colors.HexColor("#17202a"))
+    c.drawString(margin, y, "Why buyers click")
+    y -= 20
+
+    c.setFont("Helvetica", body_size)
+    c.setFillColor(colors.HexColor("#33404d"))
+    for line in edits["promo"].split("\n"):
+        c.drawString(margin, y, line)
+        y -= 14
+
+    # Bottom gallery
+    bottom_imgs = [img for name, img in images if name in bottom_names][:3]
+    if bottom_imgs:
+        x = margin
+        y_img = 110
+        for img in bottom_imgs:
+            thumb = fit_image(img, (170, 105))
+            b = io.BytesIO()
+            thumb.save(b, format="JPEG", quality=88)
+            b.seek(0)
+            c.drawImage(ImageReader(b), x, y_img, width=155, height=95,
+                        preserveAspectRatio=False, mask="auto")
+            x += 165
+
+    # Footer bar
+    footer_h = 70
+    c.setFillColor(footer_color)
+    c.rect(0, 0, w, footer_h, stroke=0, fill=1)
+
+    # Agent photo
+    agent_img = None
+    if agent_photo_name:
+        try:
+            agent_img = next(img for name, img in images if name == agent_photo_name)
+        except StopIteration:
+            agent_img = None
+
+    if agent_img:
+        circ = circular_image(agent_img, 60)
+        b = io.BytesIO()
+        circ.save(b, format="PNG")
+        b.seek(0)
+        c.drawImage(ImageReader(b), margin, 5, width=60, height=60, mask="auto")
+        text_x = margin + 75
+    else:
+        text_x = margin
+
+    # Footer text (Arial)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", footer_size)
+    c.drawString(text_x, 40, edits["footer"][:95])
+
+    c.setFont("Helvetica", footer_size - 2)
+    c.drawString(text_x, 22, f"Contact by {listing.get('deadline','')}")
+
+    c.showPage()
+    c.save()
+    mem.seek(0)
+    return mem.getvalue()
+
+# ---------------------------------------------------------
+# TEMPLATE SCRAPER
+# ---------------------------------------------------------
+
+def scrape_templates(query, urls):
+    notes = []
+    headers = {"User-Agent": "EstateLaunchTemplateResearch/1.0"}
+
+    targets = [u.strip() for u in urls.splitlines() if u.strip()]
+    if query.strip():
+        google_url = "https://www.google.com/search?tbm=isch&q=" + quote_plus(query)
+        targets.insert(0, google_url)
+
+    for url in targets[:8]:
+        try:
+            html = requests.get(url, headers=headers, timeout=10).text
+            soup = BeautifulSoup(html, "html.parser")
+            title = soup.title.get_text(" ", strip=True) if soup.title else url
+            text = " ".join(soup.get_text(" ").split())[:1500]
+
+            keywords = [
+                "luxury", "minimal", "modern", "bold", "photo", "editorial",
+                "clean", "real estate", "brochure", "template", "agent",
+                "open house", "premium", "elegant", "gradient", "geometric"
+            ]
+            cues = [k for k in keywords if k in text.lower()]
+
+            notes.append({
+                "source": url,
+                "title": title[:140],
+                "style_cues": ", ".join(cues) or "general clean layout",
+                "excerpt": text[:260]
+            })
+
+        except Exception as e:
+            notes.append({
+                "source": url,
+                "title": "Could not scrape",
+                "style_cues": "manual review needed",
+                "excerpt": str(e)[:180]
+            })
+
+    return notes
+
+# ---------------------------------------------------------
+# SAVE LISTING
+# ---------------------------------------------------------
+
+def save_listing(headline, price, location, deadline, agent, details_html, canva_url):
+    details_plain = html_to_plain(details_html)
+    st.session_state.listing = {
+        "headline": headline,
+        "price": price,
+        "location": location,
+        "deadline": str(deadline),
+        "agent": agent,
+        "details": details_plain,
+        "promo": f"Discover {headline} in {location}. {details_plain} Contact {agent} by {deadline}.",
+        "canva_url": canva_url,
+    }
+
+# ---------------------------------------------------------
+# TOP NAVIGATION
+# ---------------------------------------------------------
+
+sections = ["Listing", "Brochure PDF", "Social Media Assets", "Captions", "Template Research", "Appointments & Revenue"]
+icons = ["🏠", "📄", "📱", "✍️", "🎨", "📊"]
+
+st.markdown("<div class='navbar'>", unsafe_allow_html=True)
+nav_cols = st.columns(len(sections))
+
+for i, (sec, icon) in enumerate(zip(sections, icons)):
+    with nav_cols[i]:
+        active = st.session_state.section == sec
+        if st.button(f"{icon} {sec}", key=f"nav_{sec}"):
+            st.session_state.section = sec
+        cls = "navbtn-active" if active else "navbtn"
+        st.markdown(f"<div class='{cls}'></div>", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# SECTION: LISTING
+# ---------------------------------------------------------
+
+listing = st.session_state.listing or {
+    "headline": "Modern Family Home With Designer Finishes",
+    "price": "$749,000",
+    "location": "Austin, TX",
+    "deadline": str(date.today() + timedelta(days=21)),
+    "agent": "Angela Lee | 555-0100",
+    "details": "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard.",
+    "canva_url": "",
+}
+images = st.session_state.get("images", [])
+
+if st.session_state.section == "Listing":
+    col1, col2 = st.columns([.45, .55])
+    with col1:
+        uploads = st.file_uploader("Upload multiple property photos", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+        new_images = load_images(uploads)
+        if new_images:
+            st.session_state.images = [(name, img.copy()) for name, img in new_images]
+            st.image([img for _, img in new_images[:4]], caption=[name for name, _ in new_images[:4]], width=180)
+
+    with col2:
+        headline = st.text_input("Listing headline", listing.get("headline", ""))
+        price = st.text_input("Price", listing.get("price", ""))
+        location = st.text_input("Location", listing.get("location", ""))
+        deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
+        agent = st.text_input("Agent contact", listing.get("agent", ""))
+
+        details_html = st.text_area("Property details", listing.get("details", ""), height=150)
+        canva_url = st.text_input("Optional Canva artwork link", listing.get("canva_url", ""))
+
+        if st.button("Save listing package"):
+            save_listing(headline, price, location, deadline, agent, details_html, canva_url)
+            st.success("Listing package saved.")
+
+# ---------------------------------------------------------
+# SECTION: BROCHURE PDF
+# ---------------------------------------------------------
+
+elif st.session_state.section == "Brochure PDF":
+    st.subheader("Editable brochure layout")
+
+    c1, c2 = st.columns([.48, .52])
+    with c1:
+        edit_headline = st.text_area("Brochure headline", listing.get("headline", ""), height=80)
+        edit_promo = st.text_area("
