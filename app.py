@@ -16,119 +16,6 @@ from reportlab.pdfgen import canvas
 
 APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
-
-# GLOBAL STYLES
-st.markdown("""
-<style>
-.block-container{max-width:1240px;padding-top:5.25rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.title{font-size:2rem;font-weight:800;color:#17202a}
-.sub{color:#5d6673;margin:.2rem 0 1rem}
-.preview{border:1px solid #d7dee7;border-radius:8px;overflow:hidden;background:#fff}
-.hero{min-height:360px;background:#10252b;color:white;display:flex;align-items:flex-end;padding:24px;background-size:cover;background-position:center}
-.hero h2{font-size:2.1rem;margin:0 0 4px}
-.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}
-.grid2{display:grid;grid-template-columns:51% 49%;gap:18px;padding:18px}
-.small{color:#66717e;font-size:.9rem}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown(
-    f'<div class="title">{APP_NAME}</div>'
-    '<div class="sub">Real estate listing, brochure, social creative, appointment, and revenue workflow.</div>',
-    unsafe_allow_html=True
-)
-
-# SESSION STATE
-if "listing" not in st.session_state:
-    st.session_state.listing = {}
-if "appointments" not in st.session_state:
-    st.session_state.appointments = []
-if "template_notes" not in st.session_state:
-    st.session_state.template_notes = []
-if "images" not in st.session_state:
-    st.session_state.images = []
-
-# SOCIAL SIZES
-SOCIAL_SIZES = {
-    "TikTok Portrait 1080x1920": (1080, 1920),
-    "Instagram Portrait 1080x1350": (1080, 1350),
-    "Instagram Square 1080x1080": (1080, 1080),
-    "Facebook Landscape 1200x630": (1200, 630),
-    "LinkedIn Landscape 1200x627": (1200, 627),
-    "Story/Reel Portrait 1080x1920": (1080, 1920),
-}
-
-# IMAGE LOADING
-def load_images(uploaded):
-    images = []
-    for file in uploaded or []:
-        try:
-            img = Image.open(io.BytesIO(file.getvalue())).convert("RGB")
-            images.append((file.name, img))
-        except Exception:
-            st.warning(f"Could not read image: {file.name}")
-    return images
-
-def fit_image(img, size):
-    return ImageOps.fit(img, size, method=Image.LANCZOS, centering=(0.5, 0.5))
-
-def font(size, bold=False):
-    try:
-        name = "arialbd.ttf" if bold else "arial.ttf"
-        return ImageFont.truetype(name, size)
-    except Exception:
-        return ImageFont.load_default()
-
-def wrap_text(draw, text, fnt, max_width):
-    words = str(text).split()
-    lines, line = [], ""
-    for word in words:
-        trial = (line + " " + word).strip()
-        width = draw.textbbox((0, 0), trial, font=fnt)[2]
-        if width <= max_width:
-            line = trial
-        else:
-            if line:
-                lines.append(line)
-            line = word
-    if line:
-        lines.append(line)
-    return lines
-
-def wrap_pdf(text, width):
-    words = str(text).split()
-    lines = []
-    line = ""
-    for word in words:
-        trial = (line + " " + word).strip()
-        if len(trial) <= width:
-            line = trial
-        else:
-            if line:
-                lines.append(line)
-            line = word
-    if line:
-        lines.append(line)
-    return 
-    
-    import io
-import re
-import zipfile
-from datetime import date, timedelta
-from urllib.parse import quote_plus
-
-import pandas as pd
-import requests
-import streamlit as st
-from bs4 import BeautifulSoup
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen import canvas
-
-APP_NAME = "EstateLaunch Agent Desk"
-st.set_page_config(page_title=APP_NAME, layout="wide")
 st.markdown("""
 <style>
 .block-container{max-width:1240px;padding-top:5.25rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -284,13 +171,13 @@ def caption_for(platform, listing):
     return f"Just listed: {location} at {price}. {details} Save this one and book a showing before {deadline}."
 
 
-def wrap_pdf(text, width):
+def wrap_pdf(c, text, font_name, font_size, max_width):
     words = str(text).split()
     lines = []
     line = ""
     for word in words:
         trial = (line + " " + word).strip()
-        if len(trial) <= width:
+        if c.stringWidth(trial, font_name, font_size) <= max_width:
             line = trial
         else:
             if line:
@@ -308,10 +195,10 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c = canvas.Canvas(mem, pagesize=letter)
     w, h = letter
 
-    # GLOBAL PADDING
-    margin = 55
+    # Global 5px safe area margin
+    safe = 5
+    usable_w = w - (safe * 2)
     hero_h = 300
-    col_gap = 100
     line_gap = 18
 
     accent_color = colors.HexColor(accent_hex)
@@ -320,94 +207,89 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # ---------------------------------------------------------
     # HERO SECTION
     # ---------------------------------------------------------
+    hero_y = h - safe - hero_h
     if images and hero_name:
         hero_img = next((img for name, img in images if name == hero_name), images[0][1])
-        hero = fit_image(hero_img, (1100, 520))
+        hero = fit_image(hero_img, (int(usable_w * 2), int(hero_h * 2)))
         b = io.BytesIO()
         hero.save(b, format="JPEG", quality=90)
         b.seek(0)
-        c.drawImage(ImageReader(b), 0, h - hero_h, width=w, height=hero_h,
+        c.drawImage(ImageReader(b), safe, hero_y, width=usable_w, height=hero_h,
                     preserveAspectRatio=False, mask="auto")
 
         # Overlay
         c.setFillColor(colors.Color(0, 0, 0, alpha=.35))
-        c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
+        c.rect(safe, hero_y, usable_w, hero_h, stroke=0, fill=1)
     else:
         c.setFillColor(footer_color)
-        c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
+        c.rect(safe, hero_y, usable_w, hero_h, stroke=0, fill=1)
 
     # ---------------------------------------------------------
-    # HEADLINE, LOCATION, PRICE (title → location → price)
+    # HEADLINE, LOCATION, PRICE (Rendered inside hero area)
     # ---------------------------------------------------------
+    col_pad = 40
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", edits.get("title_size", 26))
-    c.drawString(margin, h - hero_h + 60, edits["headline"][:70])
+    c.drawString(safe + col_pad, hero_y + 60, edits["headline"][:70])
 
     c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(margin, h - hero_h + 38, listing.get("location", ""))
+    c.drawString(safe + col_pad, hero_y + 38, listing.get("location", ""))
 
     c.setFillColor(accent_color)
-    c.roundRect(margin, h - hero_h + 16, 170, 32, 6, stroke=0, fill=1)
+    c.roundRect(safe + col_pad, hero_y + 16, 170, 32, 6, stroke=0, fill=1)
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 2)
-    c.drawString(margin + 10, h - hero_h + 26, listing.get("price", ""))
+    c.drawString(safe + col_pad + 10, hero_y + 26, listing.get("price", ""))
 
     # ---------------------------------------------------------
-    # TWO COLUMNS — PIXEL-PERFECT 51% / 49% SPLIT
+    # TWO COLUMNS — About This Property / Why We Recommend
     # ---------------------------------------------------------
-    
-    usable_width = w - (margin * 2)
-    
-    left_col_width = usable_width * 0.40
-    right_col_width = usable_width * 0.40
-    
-    left_x = margin
-    right_x = margin + left_col_width
-    
-    inner_pad = 50  # perfect visual padding
-    
-    y_left = h - hero_h - 70
-    y_right = h - hero_h - 70
-    
-    # LEFT COLUMN — About This Property
+    col_w = (usable_w / 2) - col_pad - 10
+    left_x = safe + col_pad
+    right_x = safe + (usable_w / 2) + 10
+
+    y_left = hero_y - 50
+    y_right = hero_y - 50
+
+    # LEFT COLUMN 
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(left_x + inner_pad, y_left, "About This Property")
+    c.drawString(left_x, y_left, "About This Property")
     y_left -= 28
-    
+
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
-    
+
     about_paras = [p.strip() for p in edits["about"].split("\n") if p.strip()][:2]
-    
+
     for para in about_paras:
-        wrapped = wrap_pdf(para, 38)  # tuned for 51% width
+        wrapped = wrap_pdf(c, para, "Helvetica", edits.get("body_size", 12), col_w)
         for line in wrapped:
-            c.drawString(left_x + inner_pad, y_left, line)
+            c.drawString(left_x, y_left, line)
             y_left -= line_gap
         y_left -= line_gap // 2
-    
-    
-    # RIGHT COLUMN — Why We Recommend (bullets)
+
+
+    # RIGHT COLUMN 
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", edits.get("body_size", 12) + 5)
-    c.drawString(right_x + inner_pad, y_right, "Why We Recommend")
+    c.drawString(right_x, y_right, "Why We Recommend")
     y_right -= 28
-    
+
     c.setFont("Helvetica", edits.get("body_size", 12))
     c.setFillColor(colors.HexColor("#33404d"))
-    
+
     highlight_lines = [l.strip() for l in edits["highlights"].split("\n") if l.strip()][:5]
-    
+
     for item in highlight_lines:
-        wrapped = wrap_pdf(item, 32)  # tuned for 49% width
+        wrapped = wrap_pdf(c, item, "Helvetica", edits.get("body_size", 12), col_w - 14)
         for i, line in enumerate(wrapped):
             if i == 0:
-                c.drawString(right_x + inner_pad, y_right, "• " + line)
+                c.drawString(right_x, y_right, "• " + line)
             else:
-                c.drawString(right_x + inner_pad + 14, y_right, line)
+                c.drawString(right_x + 14, y_right, line)
             y_right -= line_gap
-    y_right -= line_gap // 2
+        y_right -= line_gap // 2
 
 
     # ---------------------------------------------------------
@@ -415,28 +297,31 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # ---------------------------------------------------------
     bottom_imgs = [img for name, img in images if name in bottom_names][:3]
     if bottom_imgs:
-        x = margin
-        y_img = 150
+        img_w = (usable_w - (col_pad * 2) - 20) / 3
+        img_h = img_w * 0.65
+        x = safe + col_pad
+        y_img = safe + 70 + 20
         for img in bottom_imgs:
-            thumb = fit_image(img, (200, 130))
+            thumb = fit_image(img, (int(img_w*2), int(img_h*2)))
             b = io.BytesIO()
             thumb.save(b, format="JPEG", quality=88)
             b.seek(0)
-            c.drawImage(ImageReader(b), x, y_img, width=180, height=115,
+            c.drawImage(ImageReader(b), x, y_img, width=img_w, height=img_h,
                         preserveAspectRatio=False, mask="auto")
-            x += 200
+            x += img_w + 10
 
     # ---------------------------------------------------------
     # FOOTER BAR
     # ---------------------------------------------------------
+    footer_h = 70
     c.setFillColor(footer_color)
-    c.rect(0, 0, w, 70, stroke=0, fill=1)
+    c.rect(safe, safe, usable_w, footer_h, stroke=0, fill=1)
 
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", edits.get("footer_size", 12))
-    c.drawString(margin, 40, edits["footer"][:95])
+    c.drawString(safe + col_pad, safe + 30, edits["footer"][:95])
 
-    c.drawRightString(w - margin, 40, f"Contact by {listing.get('deadline','')}")
+    c.drawRightString(safe + usable_w - col_pad, safe + 30, f"Contact by {listing.get('deadline','')}")
 
     c.showPage()
     c.save()
