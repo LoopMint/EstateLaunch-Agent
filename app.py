@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     f'<div class="title">{APP_NAME}</div>'
-    '<div class="sub">Singapore real estate multi-property tracker, marketing engine, and ABSD revenue desk.</div>',
+    '<div class="sub">Real estate management, creative and finances dashboard.</div>',
     unsafe_allow_html=True
 )
 
@@ -47,7 +47,7 @@ if "properties" not in st.session_state:
             "price": "$1,750,000",
             "location": "Tampines North, Singapore",
             "deadline": str(date.today() + timedelta(days=21)),
-            "agent": "Angela Lee | 65-9123-4567",
+            "agent": "Angela Tan: 9123 4567",
             "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with integrated retail mall access.",
             "canva_url": "",
             "status": "Available",
@@ -438,8 +438,8 @@ with tabs[0]:
         )
         in_status = st.selectbox(
             "Status",
-            ["Available", "Offer Received", "Sold", "Archived"],
-            index=["Available", "Offer Received", "Sold", "Archived"].index(
+            ["Available", "In Progress", "Sold"],
+            index=["Available", "In Progress", "Sold"].index(
                 listing.get("status", "Available")
             )
         )
