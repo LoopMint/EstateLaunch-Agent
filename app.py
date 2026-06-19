@@ -27,7 +27,7 @@ st.markdown("""
 .preview{border:1px solid #d7dee7;border-radius:8px;overflow:hidden;background:#fff}
 .hero{min-height:310px;background:#10252b;color:white;display:flex;align-items:flex-end;padding:24px;background-size:cover;background-position:center}
 .hero h2{font-size:2.1rem;margin:0 0 4px}
-.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}
+.price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:4px 6px;font-weight:800}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
 .small{color:#66717e;font-size:.9rem}
 </style>
@@ -233,7 +233,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     c.drawString(safe + col_pad, hero_y + 60, edits["headline"][:70])
 
     c.setFont("Helvetica", edits.get("body_size", 12))
-    c.drawString(safe + col_pad, hero_y + 38, listing.get("location", "")[:70])
+    c.drawString(safe + col_pad, hero_y + 60, listing.get("location", ""))
 
     c.setFillColor(accent_color)
     c.roundRect(safe + col_pad, hero_y + 16, 170, 32, 6, stroke=0, fill=1)
