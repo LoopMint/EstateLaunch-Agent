@@ -437,8 +437,8 @@ with tabs[0]:
             step=0.1
         )
         in_status = st.selectbox(
-            "Status",
-            ["Available", "Offer Received", "Sold", "Archived"],
+            "Track Status",
+            ["Avail for Viewing", "Offer Stage", "Contract", "Cal Comms After Sale"],
             index=["Available", "Offer Received", "Sold", "Archived"].index(
                 listing.get("status", "Available")
             )
