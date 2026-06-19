@@ -47,11 +47,11 @@ if "properties" not in st.session_state:
             "price": "$1,750,000",
             "location": "Tampines North, Singapore",
             "deadline": str(date.today() + timedelta(days=21)),
-            "agent": "Angela Lee | 65-9123-4567",
+            "agent": "Angela Tan: 9123 4567",
             "details": "Thoughtfully designed as a nature-inspired extension of the neighborhood, with integrated retail mall access.",
             "canva_url": "",
-            "status": "Available",
-            "commission_rate": 2.5
+            "status": "Available for Viewing",
+            "commission_rate": 2.0
         }
     ]
 if "selected_property_id" not in st.session_state:
@@ -439,8 +439,8 @@ with tabs[0]:
         in_status = st.selectbox(
             "Track Status",
             ["Avail for Viewing", "Offer Stage", "Contract", "Sold"],
-            index=["Available", "Offer Received", "Sold", "Archived"].index(
-                listing.get("status", "Available")
+            index=["Avail for Viewing", "Offer Stage", "Contract", "Sold"].index(
+                listing.get("status", "Avail for Viewing")
             )
         )
         
@@ -617,8 +617,8 @@ with tabs[3]:
         client = st.text_input("Prospect Name", "Michael Tan")
         appt_date = st.date_input("Scheduled Showing Date", date.today() + timedelta(days=2))
         status = st.selectbox(
-            "Deal Status",
-            ["Scheduled", "Shown", "Offer Table", "Under Contract", "Closed / Settled", "Lost / Cancelled"]
+            "Stage Status",
+            ["Scheduled", "Viewed", "Made Offer", "Under Contract", "Closed", "Cancelled"]
         )
         notes = st.text_area("Remarks", "Reviewing ABSD liability brackets for multiple properties.")
         
