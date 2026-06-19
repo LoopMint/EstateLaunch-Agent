@@ -641,126 +641,51 @@ with tabs[3]:
         st.markdown("### Master Lead Interactivity Ledger")
         st.dataframe(appts, use_container_width=True)
 
-# --- TAB 5: ABSD & REVENUE REPORTING (SINGAPORE COMPLIANCE) ---
+# --- TAB 5: APPOINTMENTS & FINANCIAL REPORTING ---
 with tabs[4]:
-    st.subheader("Singapore Property Analysis & Commission Revenue Dashboard")
+    st.subheader("Appointments & Financial Reporting")
     
-    val_base = parse_price_to_float(listing.get("price", "0"))
-    st.metric(
-        label="Active Asset Basis Valuation (Derived from active listing field)",
-        value=f"SGD ${val_base:,.2f}"
-    )
-    
-    st.markdown("---")
-    st.markdown("### 1. ABSD Exposure Estimator Matrix")
-    
-    rc1, rc2 = st.columns(2)
-    with rc1:
-        buyer_profile = st.selectbox(
-            "Buyer Demographic Profile Tier",
-            ["Singapore Citizen", "Singapore Permanent Resident", "Foreigner"]
-        )
-        property_holding = st.selectbox(
-            "Buyer Household Holding Status",
-            ["1st Property", "2nd Property", "3rd Property+"]
-        )
-    with rc2:
-        absd_fee, active_rate = calculate_singapore_absd(val_base, buyer_profile, property_holding)
-        st.metric(
-            label="Estimated ABSD Percentage Rate Apply",
-            value=f"{active_rate * 100:.1f}%"
-        )
-        st.metric(
-            label="Calculated ABSD Liability Charge Due",
-            value=f"SGD ${absd_fee:,.2f}"
-        )
-        
-    st.markdown("---")
-    st.markdown("### 2. End-of-Day Agent Payout & Revenue Tracking Summary")
-    st.markdown(
-        "Track realized financial metrics based on entries marked as **Sold** "
-        "within your active tracking matrix ledger database."
-    )
-    
-    total_pipeline_volume = 0.0
-    total_realized_fees = 0.0
-    closed_properties_list = []
-    
-    for p in st.session_state.properties:
-        if p.get("status") == "Sold":
-            p_val = parse_price_to_float(p.get("price", "0"))
-            rate = float(p.get("commission_rate", 2.5)) / 100.0
-            earned = p_val * rate
-            total_pipeline_volume += p_val
-            total_realized_fees += earned
-            closed_properties_list.append({
-                "Property ID": p['id'],
-                "Headline": p['headline'],
-                "Closing Value": p_val,
-                "Fee Share %": f"{p['commission_rate']}%",
-                "Your Net Payout Revenue": earned
-            })
-            
-    kc1, kc2 = st.columns(2)
-    with kc1:
-        st.metric(
-            label="Total Closed Transaction Portfolio Volume",
-            value=f"SGD ${total_pipeline_volume:,.2f}"
-        )
-    with kc2:
-        st.metric(
-            label="Net Agent Payout Commission Capital (End-of-Day Received)",
-            value=f"SGD ${total_realized_fees:,.2f}",
-            delta="Realized Revenue Flow"
-        )
-        
-    if closed_properties_list:
-        st.markdown("#### Itemized Closed Deal Registry Rows")
-        st.dataframe(pd.DataFrame(closed_properties_list), use_container_width=True, hide_index=True)
-    else:
-        st.info(
-            "No transaction properties are marked as 'Sold' within your master track registry folder yet. "
-            "Move an asset status element to 'Sold' under the 'Property Ledger' or 'Listing Entry' workspace "
-            "to compute real-time commission payout structures."
-        )
+    # 1. Appointment Section
+    st.markdown("### Client Appointment Registry")
+    with st.form("appt_form"):
+        p_name = st.selectbox("Select Property for Appointment", [p['headline'] for p in st.session_state.properties] if st.session_state.properties else ["No properties"])
+        c_name = st.text_input("Client Name")
+        c_date = st.date_input("Appointment Date")
+        if st.form_submit_button("Add Appointment"):
+            if "appointments" not in st.session_state: st.session_state.appointments = []
+            st.session_state.appointments.append({"Property": p_name, "Client": c_name, "Date": str(c_date)})
+            st.rerun()
 
-# --- FINAL TAB: PROPERTY LEDGER (Tablet View) ---
-with tabs[5]:
-    st.subheader("Portfolio Ledger — All Properties")
+    if "appointments" in st.session_state and st.session_state.appointments:
+        st.table(pd.DataFrame(st.session_state.appointments))
 
+    st.divider()
+
+    # 2. Financial Reporting Section
+    st.markdown("### Commission Reconciliation")
     if st.session_state.properties:
-        df = pd.DataFrame(st.session_state.properties)
-        df_display = df[["id", "headline", "price", "location", "status", "commission_rate"]].copy()
+        df_props = pd.DataFrame(st.session_state.properties)
+        
+        # Helper to clean currency strings
+        def clean_price(val):
+            return float(str(val).replace('$', '').replace(',', '').strip()) if val else 0.0
 
-        edited_df = st.data_editor(
-            df_display,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "status": st.column_config.SelectboxColumn(
-                    "Status",
-                    options=["Available", "Offer Received", "Sold", "Archived"]
-                )
-            }
-        )
+        df_props['cleaned_price'] = df_props['actual_sold_price'].apply(clean_price)
+        df_props['Commission (2%)'] = df_props['cleaned_price'] * 0.02
 
-        # Apply status changes back to session_state
-        for idx, row in edited_df.iterrows():
-            for p in st.session_state.properties:
-                if p["id"] == row["id"]:
-                    p["status"] = row["status"]
+        # Split into Sold (Realized) vs Available (Pending)
+        sold_df = df_props[df_props['status'] == 'Sold']
+        pending_df = df_props[df_props['status'] != 'Sold']
 
-        # Active focus selector
-        prop_options = {f"{p['headline']} ({p['price']})": p['id'] for p in st.session_state.properties}
-        selected_option = st.selectbox(
-            "Set Active Focus Target Property:",
-            list(prop_options.keys()),
-            index=list(prop_options.values()).index(st.session_state.selected_property_id)
-            if st.session_state.selected_property_id in prop_options.values()
-            else 0
-        )
-        st.session_state.selected_property_id = prop_options[selected_option]
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Total Commission Received (Sold)", f"${sold_df['Commission (2%)'].sum():,.2f}")
+        with c2:
+            st.metric("Pending Commission (Pipeline)", f"${pending_df['Commission (2%)'].sum():,.2f}")
 
-        st.success("Status updates applied. Finance calculations refreshed based on current 'Sold' flags.")
+        st.markdown("#### Detailed Transaction Ledger")
+        st.table(df_props[['headline', 'status', 'actual_sold_price', 'Commission (2%)']])
+    else:
+        st.info("No property data available to calculate commissions.")
     else:
         st.info("No properties found. Add entries under 'Listing Entry'.")
