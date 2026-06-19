@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     f'<div class="title">{APP_NAME}</div>'
-    '<div class="sub">Singapore real estate multi-property tracker, marketing engine, and ABSD revenue desk.</div>',
+    '<div class="sub">All-in-one real estate suite for property tracking, design planning, and commission calculations</div>',
     unsafe_allow_html=True
 )
 
