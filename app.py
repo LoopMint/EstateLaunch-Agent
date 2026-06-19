@@ -13,10 +13,11 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
-from streamlit_ckeditor import st_ckeditor
+from streamlit_html_editor import html_editor
 
 APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
+
 st.markdown("""
 <style>
 .block-container{max-width:1240px;padding-top:5.25rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -33,6 +34,7 @@ st.markdown("""
 .small{color:#66717e;font-size:.9rem}
 </style>
 """, unsafe_allow_html=True)
+
 st.markdown(
     f'<div class="title">{APP_NAME}</div>'
     '<div class="sub">Real estate listing, brochure, social creative, appointment, and revenue workflow.</div>',
@@ -367,16 +369,18 @@ def save_listing(headline, price, location, deadline, agent, details_html, canva
 
 
 # Top navigation buttons
-nav_cols = st.columns(6)
 sections = ["Listing", "Brochure PDF", "Social Media Assets", "Captions", "Template Research", "Appointments & Revenue"]
 icons = ["🏠", "📄", "📱", "✍️", "🎨", "📊"]
+st.markdown("<div class='navbar'>", unsafe_allow_html=True)
+nav_cols = st.columns(len(sections))
 for i, (sec, icon) in enumerate(zip(sections, icons)):
     with nav_cols[i]:
         active = st.session_state.section == sec
-        cls = "navbtn-active" if active else "navbtn"
         if st.button(f"{icon} {sec}", key=f"nav_{sec}"):
             st.session_state.section = sec
+        cls = "navbtn-active" if active else "navbtn"
         st.markdown(f"<div class='{cls}'></div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 listing = st.session_state.listing or {
     "headline": "Modern Family Home With Designer Finishes",
@@ -404,7 +408,7 @@ if st.session_state.section == "Listing":
         location = st.text_input("Location", listing.get("location", "Austin, TX"))
         deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
         agent = st.text_input("Agent contact", listing.get("agent", "Angela Lee | 555-0100"))
-        details_html = st_quill("Property details (WYSIWYG)", html=True, value=listing.get("details", ""))
+        details_html = html_editor("Property details (WYSIWYG)", value=listing.get("details", ""), height=200)
         canva_url = st.text_input("Optional Canva artwork link", listing.get("canva_url", ""))
         if st.button("Save listing package"):
             save_listing(headline, price, location, deadline, agent, details_html, canva_url)
@@ -414,10 +418,10 @@ elif st.session_state.section == "Brochure PDF":
     st.subheader("Editable brochure layout")
     c1, c2 = st.columns([.48, .52])
     with c1:
-        edit_headline_html = st_quill("Brochure headline (WYSIWYG)", html=True, value=listing.get("headline", ""))
-        edit_promo_html = st_quill("Promotional copy (WYSIWYG)", html=True, value=listing.get("promo", ""))
-        edit_highlights_html = st_quill("Highlights (WYSIWYG)", html=True, value=listing.get("details", ""))
-        edit_footer_html = st_quill("Footer/contact line (WYSIWYG)", html=True, value=listing.get("agent", ""))
+        edit_headline_html = html_editor("Brochure headline (WYSIWYG)", value=listing.get("headline", ""), height=120)
+        edit_promo_html = html_editor("Promotional copy (WYSIWYG)", value=listing.get("promo", ""), height=180)
+        edit_highlights_html = html_editor("Highlights (WYSIWYG)", value=listing.get("details", ""), height=180)
+        edit_footer_html = html_editor("Footer/contact line (WYSIWYG)", value=listing.get("agent", ""), height=100)
 
         st.markdown("### Brochure style options")
         accent_color = st.color_picker("Accent color (price badge)", "#d94f30")
@@ -489,7 +493,7 @@ elif st.session_state.section == "Social Media Assets":
     selected = st.multiselect("Social sizes", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
     preview_size = st.selectbox("Preview size", list(SOCIAL_SIZES), index=1)
 
-    social_headline_html = st_quill("Social headline (WYSIWYG)", html=True, value=listing.get("headline", "Modern Home Just Listed"))
+    social_headline_html = html_editor("Social headline (WYSIWYG)", value=listing.get("headline", "Modern Home Just Listed"), height=120)
     social_font_size = st.slider("Social headline font size", 32, 96, 64)
     social_photo = None
     if images:
@@ -555,7 +559,7 @@ elif st.session_state.section == "Appointments & Revenue":
         appt_date = st.date_input("Appointment date", date.today() + timedelta(days=2))
         status = st.selectbox("Status", ["Scheduled", "Shown", "Offer", "Under Contract", "Closed", "Lost"])
         revenue = st.number_input("Expected or closed revenue", min_value=0.0, value=12000.0, step=500.0)
-        notes_html = st_quill("Sales support notes (WYSIWYG)", html=True, value="Needs financing pre-approval and school district comparison.")
+        notes_html = html_editor("Sales support notes (WYSIWYG)", value="Needs financing pre-approval and school district comparison.", height=150)
         notes_plain = html_to_plain(notes_html)
         if st.form_submit_button("Save appointment/status"):
             st.session_state.appointments.append(
