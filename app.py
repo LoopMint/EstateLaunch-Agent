@@ -13,7 +13,10 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
-from streamlit_html_editor import html_editor
+
+# ---------------------------------------------------------
+# APP CONFIG
+# ---------------------------------------------------------
 
 APP_NAME = "EstateLaunch Agent Desk"
 st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -32,6 +35,7 @@ st.markdown("""
 .price{display:inline-block;background:#d94f30;color:white;border-radius:4px;padding:6px 10px;font-weight:800}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
 .small{color:#66717e;font-size:.9rem}
+.toolbar button{margin-right:6px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer}
 </style>
 """, unsafe_allow_html=True)
 
@@ -40,6 +44,10 @@ st.markdown(
     '<div class="sub">Real estate listing, brochure, social creative, appointment, and revenue workflow.</div>',
     unsafe_allow_html=True
 )
+
+# ---------------------------------------------------------
+# SESSION STATE
+# ---------------------------------------------------------
 
 if "listing" not in st.session_state:
     st.session_state.listing = {}
@@ -52,6 +60,10 @@ if "images" not in st.session_state:
 if "section" not in st.session_state:
     st.session_state.section = "Listing"
 
+# ---------------------------------------------------------
+# CONSTANTS
+# ---------------------------------------------------------
+
 SOCIAL_SIZES = {
     "TikTok Portrait 1080x1920": (1080, 1920),
     "Instagram Portrait 1080x1350": (1080, 1350),
@@ -61,6 +73,29 @@ SOCIAL_SIZES = {
     "Story/Reel Portrait 1080x1920": (1080, 1920),
 }
 
+# ---------------------------------------------------------
+# BASIC HTML TOOLBAR (CLOUD SAFE)
+# ---------------------------------------------------------
+
+def basic_toolbar(label, key):
+    st.markdown(f"### {label}")
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Bold", key=f"bold_{key}"):
+            st.session_state[key] = st.session_state.get(key, "") + "<b></b>"
+    with col2:
+        if st.button("Italic", key=f"italic_{key}"):
+            st.session_state[key] = st.session_state.get(key, "") + "<i></i>"
+    with col3:
+        if st.button("Underline", key=f"underline_{key}"):
+            st.session_state[key] = st.session_state.get(key, "") + "<u></u>"
+
+    return st.text_area("", value=st.session_state.get(key, ""), key=key, height=150)
+
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
 
 def load_images(uploaded):
     images = []
@@ -72,10 +107,8 @@ def load_images(uploaded):
             st.warning(f"Could not read image: {file.name}")
     return images
 
-
 def fit_image(img, size):
     return ImageOps.fit(img, size, method=Image.LANCZOS, centering=(0.5, 0.5))
-
 
 def font(size, bold=False):
     try:
@@ -84,6 +117,9 @@ def font(size, bold=False):
     except Exception:
         return ImageFont.load_default()
 
+def html_to_plain(html):
+    soup = BeautifulSoup(html, "html.parser")
+    return " ".join(soup.get_text(" ").split())
 
 def wrap_text(draw, text, fnt, max_width):
     words = str(text).split()
@@ -101,106 +137,6 @@ def wrap_text(draw, text, fnt, max_width):
         lines.append(line)
     return lines
 
-
-def html_to_plain(html):
-    if not html:
-        return ""
-    soup = BeautifulSoup(html, "html.parser")
-    return " ".join(soup.get_text(" ").split())
-
-
-def social_image(size, listing, images, platform, headline_html, font_size, selected_photo):
-    headline = html_to_plain(headline_html)
-    w, h = size
-    base = Image.new("RGB", size, "#10252b")
-    if images:
-        if selected_photo:
-            chosen = next((img for name, img in images if name == selected_photo), images[0][1])
-        else:
-            chosen = images[0][1]
-        base = fit_image(chosen, size)
-        overlay = Image.new("RGBA", size, (0, 0, 0, 95))
-        base = Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
-    draw = ImageDraw.Draw(base)
-    margin = max(42, int(w * 0.055))
-    price = listing.get("price", "$749,000")
-    location = listing.get("location", "Austin, TX")
-    agent = listing.get("agent", "Agent contact")
-    deadline = listing.get("deadline", str(date.today() + timedelta(days=21)))
-    badge_h = max(58, int(h * 0.045))
-    draw.rounded_rectangle((margin, margin, margin + int(w * 0.34), margin + badge_h), radius=10, fill="#d94f30")
-    draw.text((margin + 22, margin + 14), price, fill="white", font=font(max(26, int(w * 0.034)), True))
-    headline_font = font(font_size, True)
-    y = int(h * 0.55) if h > w else int(h * 0.34)
-    for line in wrap_text(draw, headline, headline_font, w - margin * 2)[:3]:
-        draw.text((margin, y), line, fill="white", font=headline_font)
-        y += int(headline_font.size * 1.12)
-    sub = f"{location} | Contact by {deadline}"
-    draw.text((margin, y + 12), sub, fill="#f3f7f8", font=font(max(24, int(w * 0.028)), False))
-    draw.rectangle((0, h - int(h * .12), w, h), fill="#10252b")
-    draw.text((margin, h - int(h * .08)), f"{agent}  |  Schedule a showing", fill="white", font=font(max(24, int(w * 0.027)), True))
-    draw.text((w - margin - 220, h - int(h * .08)), platform.split()[0], fill="#9edfd4", font=font(max(22, int(w * 0.024)), True))
-    return base
-
-
-def make_social_zip(listing, images, selected_sizes, social_headline_html, social_font_size, social_photo):
-    mem = io.BytesIO()
-    with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as zf:
-        captions = []
-        for label in selected_sizes:
-            img = social_image(SOCIAL_SIZES[label], listing, images, label, social_headline_html, social_font_size, social_photo)
-            b = io.BytesIO()
-            img.save(b, format="PNG")
-            zf.writestr(re.sub(r"[^a-zA-Z0-9]+", "_", label).strip("_") + ".png", b.getvalue())
-            captions.append({"asset": label, "caption": caption_for(label, listing), "cta": "Book a private showing"})
-        zf.writestr("captions.csv", pd.DataFrame(captions).to_csv(index=False))
-        zf.writestr("canva_prompt.txt", canva_prompt(listing))
-    mem.seek(0)
-    return mem.getvalue()
-
-
-def canva_prompt(listing):
-    return (
-        "Create a premium real estate marketing artwork using the uploaded property photos. "
-        "Use a clean luxury editorial layout with a large hero image, price badge in the upper right, "
-        "location under the headline, and agent contact footer. "
-        f"Headline: {listing.get('headline','Modern Home Just Listed')}. "
-        f"Price: {listing.get('price','$749,000')}. Location: {listing.get('location','Austin, TX')}. "
-        f"Contact deadline: {listing.get('deadline','soon')}. Agent: {listing.get('agent','Agent contact')}."
-    )
-
-
-def caption_for(platform, listing):
-    location = listing.get("location", "this neighborhood")
-    price = listing.get("price", "a compelling price")
-    deadline = listing.get("deadline", "soon")
-    details = listing.get("details", "a move-in-ready home with standout features")
-    if "TikTok" in platform or "Story" in platform:
-        return f"POV: you found the listing everyone will ask about in {location}. {price}. Contact by {deadline} for a private showing. #realestate #hometour"
-    if "LinkedIn" in platform:
-        return f"New listing in {location}: {details} Offered at {price}. Buyer agents and relocation clients can contact us by {deadline} for showing support."
-    if "Facebook" in platform:
-        return f"Just listed in {location}. {details} Offered at {price}. Message us before {deadline} to schedule a tour."
-    return f"Just listed: {location} at {price}. {details} Save this one and book a showing before {deadline}."
-
-
-def wrap_pdf(text, width):
-    words = str(text).split()
-    lines = []
-    line = ""
-    for word in words:
-        trial = (line + " " + word).strip()
-        if len(trial) <= width:
-            line = trial
-        else:
-            if line:
-                lines.append(line)
-            line = word
-    if line:
-        lines.append(line)
-    return lines
-
-
 def circular_image(img, diameter):
     img = img.resize((diameter, diameter))
     mask = Image.new("L", (diameter, diameter), 0)
@@ -210,8 +146,64 @@ def circular_image(img, diameter):
     output.paste(img, (0, 0), mask)
     return output
 
+# ---------------------------------------------------------
+# SOCIAL IMAGE GENERATOR
+# ---------------------------------------------------------
 
-def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agent_photo_name, accent_hex="#d94f30", footer_hex="#10252b"):
+def social_image(size, listing, images, platform, headline_html, font_size, selected_photo):
+    headline = html_to_plain(headline_html)
+    w, h = size
+    base = Image.new("RGB", size, "#10252b")
+
+    if images:
+        chosen = next((img for name, img in images if name == selected_photo), images[0][1])
+        base = fit_image(chosen, size)
+        overlay = Image.new("RGBA", size, (0, 0, 0, 95))
+        base = Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
+
+    draw = ImageDraw.Draw(base)
+    margin = max(42, int(w * 0.055))
+
+    price = listing.get("price", "$749,000")
+    location = listing.get("location", "Austin, TX")
+    agent = listing.get("agent", "Agent contact")
+    deadline = listing.get("deadline", str(date.today() + timedelta(days=21)))
+
+    # Price badge
+    badge_h = max(58, int(h * 0.045))
+    draw.rounded_rectangle((margin, margin, margin + int(w * 0.34), margin + badge_h),
+                           radius=10, fill="#d94f30")
+    draw.text((margin + 22, margin + 14), price, fill="white",
+              font=font(max(26, int(w * 0.034)), True))
+
+    # Headline
+    headline_font = font(font_size, True)
+    y = int(h * 0.55) if h > w else int(h * 0.34)
+
+    for line in wrap_text(draw, headline, headline_font, w - margin * 2)[:3]:
+        draw.text((margin, y), line, fill="white", font=headline_font)
+        y += int(headline_font.size * 1.12)
+
+    # Subline
+    sub = f"{location} | Contact by {deadline}"
+    draw.text((margin, y + 12), sub, fill="#f3f7f8",
+              font=font(max(24, int(w * 0.028)), False))
+
+    # Footer bar
+    draw.rectangle((0, h - int(h * .12), w, h), fill="#10252b")
+    draw.text((margin, h - int(h * .08)),
+              f"{agent}  |  Schedule a showing",
+              fill="white", font=font(max(24, int(w * 0.027)), True))
+
+    return base
+
+# ---------------------------------------------------------
+# BROCHURE PDF GENERATOR
+# ---------------------------------------------------------
+
+def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agent_photo_name,
+                      accent_hex="#d94f30", footer_hex="#10252b"):
+
     edits = {
         "headline": html_to_plain(edits_html["headline"]),
         "promo": html_to_plain(edits_html["promo"]),
@@ -228,52 +220,60 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
     accent_color = colors.HexColor(accent_hex)
     footer_color = colors.HexColor(footer_hex)
 
+    # Hero image
     if images and hero_name:
         hero_img = next((img for name, img in images if name == hero_name), images[0][1])
         hero = fit_image(hero_img, (1100, 520))
         b = io.BytesIO()
         hero.save(b, format="JPEG", quality=90)
         b.seek(0)
-        c.drawImage(ImageReader(b), 0, h - hero_h, width=w, height=hero_h, preserveAspectRatio=False, mask="auto")
+        c.drawImage(ImageReader(b), 0, h - hero_h, width=w, height=hero_h,
+                    preserveAspectRatio=False, mask="auto")
         c.setFillColor(colors.Color(0, 0, 0, alpha=.35))
         c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
-    else:
-        c.setFillColor(footer_color)
-        c.rect(0, h - hero_h, w, hero_h, stroke=0, fill=1)
 
+    # Headline
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 23)
     c.drawString(margin, h - 82, edits["headline"][:58])
+
     c.setFont("Helvetica", 12)
     c.drawString(margin, h - 105, listing.get("location", ""))
 
+    # Price badge
     c.setFillColor(accent_color)
     c.roundRect(w - margin - 150, h - 92, 150, 36, 5, stroke=0, fill=1)
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 15)
     c.drawCentredString(w - margin - 75, h - 78, listing.get("price", ""))
 
+    # Highlights
     y = h - hero_h - 34
     c.setFillColor(colors.HexColor("#17202a"))
     c.setFont("Helvetica-Bold", 16)
     c.drawString(margin, y, "Property Highlights")
     y -= 22
+
     c.setFont("Helvetica", 10)
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_pdf(edits["highlights"], 90):
+    for line in wrap_text(c, edits["highlights"], font(10), 90):
         c.drawString(margin, y, line)
         y -= 14
+
+    # Promo
     y -= 8
     c.setFont("Helvetica-Bold", 14)
     c.setFillColor(colors.HexColor("#17202a"))
     c.drawString(margin, y, "Why buyers click")
     y -= 20
+
     c.setFont("Helvetica", 10)
     c.setFillColor(colors.HexColor("#33404d"))
-    for line in wrap_pdf(edits["promo"], 90):
+    for line in wrap_text(c, edits["promo"], font(10), 90):
         c.drawString(margin, y, line)
         y -= 14
 
+    # Bottom gallery
     bottom_imgs = [img for name, img in images if name in bottom_names][:3]
     if bottom_imgs:
         x = margin
@@ -283,13 +283,16 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
             b = io.BytesIO()
             thumb.save(b, format="JPEG", quality=88)
             b.seek(0)
-            c.drawImage(ImageReader(b), x, y_img, width=155, height=95, preserveAspectRatio=False, mask="auto")
+            c.drawImage(ImageReader(b), x, y_img, width=155, height=95,
+                        preserveAspectRatio=False, mask="auto")
             x += 165
 
+    # Footer bar
     footer_h = 70
     c.setFillColor(footer_color)
     c.rect(0, 0, w, footer_h, stroke=0, fill=1)
 
+    # Agent photo
     agent_img = None
     if agent_photo_name:
         try:
@@ -307,9 +310,11 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
     else:
         text_x = margin
 
+    # Footer text
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 12)
     c.drawString(text_x, 40, edits["footer"][:95])
+
     c.setFont("Helvetica", 10)
     c.drawString(text_x, 22, f"Contact by {listing.get('deadline','')}")
 
@@ -318,32 +323,40 @@ def make_brochure_pdf(listing, images, edits_html, hero_name, bottom_names, agen
     mem.seek(0)
     return mem.getvalue()
 
+# ---------------------------------------------------------
+# TEMPLATE SCRAPER
+# ---------------------------------------------------------
 
 def scrape_templates(query, urls):
     notes = []
     headers = {"User-Agent": "EstateLaunchTemplateResearch/1.0"}
+
     targets = [u.strip() for u in urls.splitlines() if u.strip()]
     if query.strip():
         google_url = "https://www.google.com/search?tbm=isch&q=" + quote_plus(query)
         targets.insert(0, google_url)
+
     for url in targets[:8]:
         try:
             html = requests.get(url, headers=headers, timeout=10).text
             soup = BeautifulSoup(html, "html.parser")
             title = soup.title.get_text(" ", strip=True) if soup.title else url
             text = " ".join(soup.get_text(" ").split())[:1500]
+
             keywords = [
                 "luxury", "minimal", "modern", "bold", "photo", "editorial",
                 "clean", "real estate", "brochure", "template", "agent",
                 "open house", "premium", "elegant", "gradient", "geometric"
             ]
             cues = [k for k in keywords if k in text.lower()]
+
             notes.append({
                 "source": url,
                 "title": title[:140],
                 "style_cues": ", ".join(cues) or "general clean layout",
                 "excerpt": text[:260]
             })
+
         except Exception as e:
             notes.append({
                 "source": url,
@@ -351,8 +364,12 @@ def scrape_templates(query, urls):
                 "style_cues": "manual review needed",
                 "excerpt": str(e)[:180]
             })
+
     return notes
 
+# ---------------------------------------------------------
+# SAVE LISTING
+# ---------------------------------------------------------
 
 def save_listing(headline, price, location, deadline, agent, details_html, canva_url):
     details_plain = html_to_plain(details_html)
@@ -367,12 +384,16 @@ def save_listing(headline, price, location, deadline, agent, details_html, canva
         "canva_url": canva_url,
     }
 
+# ---------------------------------------------------------
+# TOP NAVIGATION
+# ---------------------------------------------------------
 
-# Top navigation buttons
 sections = ["Listing", "Brochure PDF", "Social Media Assets", "Captions", "Template Research", "Appointments & Revenue"]
 icons = ["🏠", "📄", "📱", "✍️", "🎨", "📊"]
+
 st.markdown("<div class='navbar'>", unsafe_allow_html=True)
 nav_cols = st.columns(len(sections))
+
 for i, (sec, icon) in enumerate(zip(sections, icons)):
     with nav_cols[i]:
         active = st.session_state.section == sec
@@ -380,193 +401,16 @@ for i, (sec, icon) in enumerate(zip(sections, icons)):
             st.session_state.section = sec
         cls = "navbtn-active" if active else "navbtn"
         st.markdown(f"<div class='{cls}'></div>", unsafe_allow_html=True)
+
 st.markdown("</div>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# SECTION: LISTING
+# ---------------------------------------------------------
 
 listing = st.session_state.listing or {
     "headline": "Modern Family Home With Designer Finishes",
     "price": "$749,000",
     "location": "Austin, TX",
     "deadline": str(date.today() + timedelta(days=21)),
-    "agent": "Angela Lee | 555-0100",
-    "details": "4 bed, 3 bath, renovated kitchen, walkable neighborhood, solar panels, large backyard.",
-    "canva_url": "",
-}
-images = st.session_state.get("images", [])
-
-
-if st.session_state.section == "Listing":
-    col1, col2 = st.columns([.45, .55])
-    with col1:
-        uploads = st.file_uploader("Upload multiple property photos", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-        new_images = load_images(uploads)
-        if new_images:
-            st.session_state.images = [(name, img.copy()) for name, img in new_images]
-            st.image([img for _, img in new_images[:4]], caption=[name for name, _ in new_images[:4]], width=180)
-    with col2:
-        headline = st.text_input("Listing headline", listing.get("headline", "Modern Family Home With Designer Finishes"))
-        price = st.text_input("Price", listing.get("price", "$749,000"))
-        location = st.text_input("Location", listing.get("location", "Austin, TX"))
-        deadline = st.date_input("Contact by deadline", date.today() + timedelta(days=21))
-        agent = st.text_input("Agent contact", listing.get("agent", "Angela Lee | 555-0100"))
-        details_html = html_editor("Property details (WYSIWYG)", value=listing.get("details", ""), height=200)
-        canva_url = st.text_input("Optional Canva artwork link", listing.get("canva_url", ""))
-        if st.button("Save listing package"):
-            save_listing(headline, price, location, deadline, agent, details_html, canva_url)
-            st.success("Listing package saved.")
-
-elif st.session_state.section == "Brochure PDF":
-    st.subheader("Editable brochure layout")
-    c1, c2 = st.columns([.48, .52])
-    with c1:
-        edit_headline_html = html_editor("Brochure headline (WYSIWYG)", value=listing.get("headline", ""), height=120)
-        edit_promo_html = html_editor("Promotional copy (WYSIWYG)", value=listing.get("promo", ""), height=180)
-        edit_highlights_html = html_editor("Highlights (WYSIWYG)", value=listing.get("details", ""), height=180)
-        edit_footer_html = html_editor("Footer/contact line (WYSIWYG)", value=listing.get("agent", ""), height=100)
-
-        st.markdown("### Brochure style options")
-        accent_color = st.color_picker("Accent color (price badge)", "#d94f30")
-        footer_color = st.color_picker("Footer bar color", "#10252b")
-
-        hero_choice = None
-        bottom_choices = []
-        agent_photo_choice = None
-        if images:
-            hero_choice = st.selectbox("Select hero image", options=[name for name, _ in images], index=0)
-            bottom_choices = st.multiselect(
-                "Select bottom gallery images (up to 3)",
-                options=[name for name, _ in images],
-                default=[name for name, _ in images[1:4]] if len(images) > 1 else [],
-            )
-            agent_photo_choice = st.selectbox(
-                "Select agent profile photo (round footer image)",
-                options=[name for name, _ in images],
-                index=0,
-            )
-            listing["agent_photo"] = agent_photo_choice
-
-        st.text_area("Internal Canva/AI prompt (for design tools)", canva_prompt(listing), height=130)
-
-        pdf_data = make_brochure_pdf(
-            listing,
-            images,
-            {
-                "headline": edit_headline_html,
-                "promo": edit_promo_html,
-                "highlights": edit_highlights_html,
-                "footer": edit_footer_html,
-            },
-            hero_choice,
-            bottom_choices,
-            listing.get("agent_photo"),
-            accent_hex=accent_color,
-            footer_hex=footer_color,
-        )
-        st.download_button("Download brochure PDF", pdf_data, file_name="estate_brochure.pdf", mime="application/pdf")
-
-    with c2:
-        if images and hero_choice:
-            hero_preview = next((img for name, img in images if name == hero_choice), images[0][1])
-            st.image(hero_preview, caption="Hero image preview", use_container_width=True)
-        elif images:
-            st.image(images[0][1], caption="Hero image preview", use_container_width=True)
-
-        edit_headline_plain = html_to_plain(edit_headline_html)
-        edit_highlights_plain = html_to_plain(edit_highlights_html)
-        edit_promo_plain = html_to_plain(edit_promo_html)
-        edit_footer_plain = html_to_plain(edit_footer_html)
-
-        st.markdown(f"""
-        <div class='preview'>
-          <div class='hero'>
-            <div><span class='price'>{listing.get('price','')}</span><h2>{edit_headline_plain}</h2><div>{listing.get('location','')}</div></div>
-          </div>
-          <div class='grid2'>
-            <div><b>Highlights</b><br><span class='small'>{edit_highlights_plain}</span></div>
-            <div><b>Buyer hook</b><br><span class='small'>{edit_promo_plain}</span></div>
-          </div>
-          <div style='padding:14px 18px;background:#10252b;color:white'>{edit_footer_plain} | Contact by {listing.get('deadline','')}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-elif st.session_state.section == "Social Media Assets":
-    st.subheader("Generate platform-ready social images")
-    selected = st.multiselect("Social sizes", list(SOCIAL_SIZES), default=list(SOCIAL_SIZES))
-    preview_size = st.selectbox("Preview size", list(SOCIAL_SIZES), index=1)
-
-    social_headline_html = html_editor("Social headline (WYSIWYG)", value=listing.get("headline", "Modern Home Just Listed"), height=120)
-    social_font_size = st.slider("Social headline font size", 32, 96, 64)
-    social_photo = None
-    if images:
-        social_photo = st.selectbox("Select social media photo", [name for name, _ in images], index=0)
-
-    if images:
-        preview = social_image(
-            SOCIAL_SIZES[preview_size],
-            listing,
-            images,
-            preview_size,
-            social_headline_html,
-            social_font_size,
-            social_photo,
-        )
-        st.image(preview, caption=preview_size, use_container_width=False)
-    else:
-        st.info("Upload property photos on the Listing section for photo-based previews.")
-
-    if selected and images:
-        zip_data = make_social_zip(listing, images, selected, social_headline_html, social_font_size, social_photo)
-        st.download_button(
-            "Download zipped social media package",
-            zip_data,
-            file_name="estate_social_media_assets.zip",
-            mime="application/zip",
-        )
-
-elif st.session_state.section == "Captions":
-    st.subheader("Click-focused social captions")
-    rows = []
-    for label in SOCIAL_SIZES:
-        rows.append(
-            {
-                "platform_size": label,
-                "caption": caption_for(label, listing),
-                "hook_type": "curiosity + deadline",
-                "cta": "Book a private showing",
-            }
-        )
-    df = pd.DataFrame(rows)
-    st.data_editor(df, use_container_width=True, hide_index=True)
-    st.download_button("Download caption bank CSV", df.to_csv(index=False), file_name="estate_caption_bank.csv")
-
-elif st.session_state.section == "Template Research":
-    st.subheader("Scrape and adapt template inspiration")
-    query = st.text_input("Search query", "luxury real estate brochure template Instagram property listing")
-    urls = st.text_area("Or paste template/sample URLs, one per line", "")
-    if st.button("Search/scrape template cues"):
-        st.session_state.template_notes = scrape_templates(query, urls)
-    if st.session_state.template_notes:
-        notes_df = pd.DataFrame(st.session_state.template_notes)
-        st.dataframe(notes_df, use_container_width=True)
-        cues = "; ".join(notes_df["style_cues"].dropna().astype(str).tolist())
-        adapted = canva_prompt(listing) + " Adapt visual style cues from research: " + cues
-        st.text_area("Adapted AI/Canva design prompt", adapted, height=150)
-        st.download_button("Download template research CSV", notes_df.to_csv(index=False), file_name="template_research.csv")
-
-elif st.session_state.section == "Appointments & Revenue":
-    st.subheader("Appointments & Revenue")
-    with st.form("appointment"):
-        client = st.text_input("Buyer / client", "Jordan Smith")
-        appt_date = st.date_input("Appointment date", date.today() + timedelta(days=2))
-        status = st.selectbox("Status", ["Scheduled", "Shown", "Offer", "Under Contract", "Closed", "Lost"])
-        revenue = st.number_input("Expected or closed revenue", min_value=0.0, value=12000.0, step=500.0)
-        notes_html = html_editor("Sales support notes (WYSIWYG)", value="Needs financing pre-approval and school district comparison.", height=150)
-        notes_plain = html_to_plain(notes_html)
-        if st.form_submit_button("Save appointment/status"):
-            st.session_state.appointments.append(
-                {"client": client, "date": str(appt_date), "status": status, "revenue": revenue, "notes": notes_plain}
-            )
-    appts = pd.DataFrame(st.session_state.appointments)
-    if not appts.empty:
-        st.dataframe(appts, use_container_width=True)
-        st.bar_chart(appts.groupby("status")["revenue"].sum())
-        st.download_button("Download CRM CSV", appts.to_csv(index=False), file_name="real_estate_pipeline.csv")
+    "agent": "Angela Lee
