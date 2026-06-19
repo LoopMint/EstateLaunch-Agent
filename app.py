@@ -198,7 +198,7 @@ def make_brochure_pdf(listing, images, edits, hero_name, bottom_names,
     # GLOBAL PADDING
     margin = 55
     hero_h = 300
-    col_gap = 32
+    col_gap = 50
     line_gap = 18
 
     accent_color = colors.HexColor(accent_hex)
